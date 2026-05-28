@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: 'Inter', system-ui, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: var(--font-inter);
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { @apply bg-gray-100; }
+  ::-webkit-scrollbar-thumb  { @apply bg-gray-300 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+}
+
+@layer components {
+  /* ── Кнопки ── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary   { @apply btn bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 focus-visible:ring-indigo-500; }
+  .btn-secondary { @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:scale-95 shadow-sm; }
+  .btn-danger    { @apply btn bg-rose-500 text-white hover:bg-rose-600 active:scale-95; }
+  .btn-ghost     { @apply btn text-gray-600 hover:bg-gray-100 active:scale-95; }
+  .btn-lg        { @apply px-6 py-3.5 text-base rounded-2xl; }
+  .btn-sm        { @apply px-3 py-1.5 text-xs rounded-lg; }
+
+  /* ── Инпуты ── */
+  .input {
+    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100;
+  }
+  .input-error { @apply border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-100; }
+  .label       { @apply block text-sm font-medium text-gray-700 mb-1.5; }
+
+  /* ── Карточки ── */
+  .card       { @apply bg-white rounded-2xl border border-gray-100 shadow-sm; }
+  .card-hover { @apply card hover:shadow-md transition-shadow cursor-pointer; }
+
+  /* ── Бейджи ── */
+  .badge         { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium; }
+  .badge-primary { @apply badge bg-indigo-50 text-indigo-700; }
+  .badge-success { @apply badge bg-green-50  text-green-700; }
+  .badge-warning { @apply badge bg-amber-50  text-amber-700; }
+  .badge-danger  { @apply badge bg-rose-50   text-rose-700; }
+  .badge-gray    { @apply badge bg-gray-100  text-gray-600; }
+
+  /* ── Разделитель ── */
+  .divider { @apply border-t border-gray-100 my-4; }
+
+  /* ── Статусы поездки ── */
+  .status-searching   { @apply badge bg-blue-50   text-blue-700; }
+  .status-negotiating { @apply badge bg-amber-50  text-amber-700; }
+  .status-accepted    { @apply badge bg-green-50  text-green-700; }
+  .status-in_progress { @apply badge bg-indigo-50 text-indigo-700; }
+  .status-completed   { @apply badge bg-gray-100  text-gray-600; }
+  .status-cancelled   { @apply badge bg-rose-50   text-rose-700; }
+}
+
+@layer utilities {
+  .glass {
+    backdrop-filter: blur(12px) saturate(180%);
+    background-color: rgba(255,255,255,0.8);
+  }
+
+  .online-dot { @apply relative flex h-2.5 w-2.5; }
+  .online-dot::before {
+    content: '';
+    @apply absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75;
+    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  .online-dot::after {
+    content: '';
+    @apply relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500;
+  }
+
+  .star-filled { color: #F59E0B; }
+  .star-empty  { color: #D1D5DB; }
+}
