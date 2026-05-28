@@ -3,74 +3,163 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Mail, Lock, Eye, EyeOff, Car, UserPlus, LogIn } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Car, UserPlus, LogIn, User, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-type Mode = 'login' | 'register' | 'reset'
+type Mode = 'login' | 'register' | 'reset' | 'check_email'
 
 export default function AuthPage() {
-  const router = useRouter()
+  const router  = useRouter()
   const supabase = createClient()
 
-  const [mode, setMode]           = useState<Mode>('login')
-  const [email, setEmail]         = useState('')
-  const [password, setPassword]   = useState('')
+  const [mode,      setMode]      = useState<Mode>('login')
+  const [email,     setEmail]     = useState('')
+  const [fullName,  setFullName]  = useState('')
+  const [password,  setPassword]  = useState('')
   const [password2, setPassword2] = useState('')
-  const [showPass, setShowPass]   = useState(false)
-  const [loading, setLoading]     = useState(false)
+  const [showPass,  setShowPass]  = useState(false)
+  const [loading,   setLoading]   = useState(false)
 
-  // ── Вход ────────────────────────────────────────────────────
+  // Очищаем поля при смене режима
+  function switchMode(m: Mode) {
+    setMode(m)
+    setPassword('')
+    setPassword2('')
+    setShowPass(false)
+  }
+
+  // ── Вход ──────────────────────────────────────────────────────
   async function handleLogin() {
-    if (!email || !password) { toast.error('Заполните все поля'); return }
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) {
-      if (error.message.includes('Invalid login')) toast.error('Неверный email или пароль')
-      else toast.error('Ошибка входа: ' + error.message)
+    if (!email.trim() || !password) {
+      toast.error('Заполните все поля')
       return
     }
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    })
+    setLoading(false)
+
+    if (error) {
+      if (
+        error.message.includes('Invalid login') ||
+        error.message.includes('invalid_credentials') ||
+        error.message.includes('Email not confirmed')
+      ) {
+        toast.error('Неверный email или пароль')
+      } else {
+        toast.error('Ошибка входа: ' + error.message)
+      }
+      return
+    }
+
     toast.success('Добро пожаловать!')
     router.push('/')
     router.refresh()
   }
 
-  // ── Регистрация ─────────────────────────────────────────────
+  // ── Регистрация ───────────────────────────────────────────────
   async function handleRegister() {
-    if (!email || !password || !password2) { toast.error('Заполните все поля'); return }
-    if (password.length < 6) { toast.error('Пароль минимум 6 символов'); return }
-    if (password !== password2) { toast.error('Пароли не совпадают'); return }
+    if (!email.trim() || !fullName.trim() || !password || !password2) {
+      toast.error('Заполните все поля')
+      return
+    }
+    if (fullName.trim().length < 2) {
+      toast.error('Введите имя (минимум 2 символа)')
+      return
+    }
+    if (password.length < 6) {
+      toast.error('Пароль минимум 6 символов')
+      return
+    }
+    if (password !== password2) {
+      toast.error('Пароли не совпадают')
+      return
+    }
+
     setLoading(true)
     const { error } = await supabase.auth.signUp({
-      email,
+      email:    email.trim().toLowerCase(),
       password,
-      options: { emailRedirectTo: `${window.location.origin}/` }
+      options: {
+        data:            { full_name: fullName.trim() },
+        emailRedirectTo: `${window.location.origin}/auth/confirmed`,
+      },
     })
     setLoading(false)
-    if (error) { toast.error('Ошибка: ' + error.message); return }
-    toast.success('Аккаунт создан! Проверьте почту для подтверждения.')
-    setMode('login')
+
+    if (error) {
+      if (error.message.includes('already registered')) {
+        toast.error('Этот email уже зарегистрирован. Войдите или сбросьте пароль.')
+      } else {
+        toast.error('Ошибка регистрации: ' + error.message)
+      }
+      return
+    }
+
+    // Показываем экран "проверьте почту"
+    setMode('check_email')
   }
 
-  // ── Сброс пароля ────────────────────────────────────────────
+  // ── Сброс пароля ──────────────────────────────────────────────
   async function handleReset() {
-    if (!email) { toast.error('Введите email'); return }
+    if (!email.trim()) {
+      toast.error('Введите email')
+      return
+    }
     setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`
-    })
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.trim().toLowerCase(),
+      { redirectTo: `${window.location.origin}/auth/update-password` }
+    )
     setLoading(false)
-    if (error) { toast.error('Ошибка: ' + error.message); return }
-    toast.success('Ссылка для сброса пароля отправлена на почту')
-    setMode('login')
+
+    if (error) {
+      toast.error('Ошибка: ' + error.message)
+      return
+    }
+
+    toast.success('Ссылка для сброса пароля отправлена!')
+    setMode('check_email')
   }
 
-  function handleSubmit() {
-    if (mode === 'login')    handleLogin()
-    if (mode === 'register') handleRegister()
-    if (mode === 'reset')    handleReset()
+  // ── Экран "проверьте почту" ───────────────────────────────────
+  if (mode === 'check_email') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/20 backdrop-blur mb-4">
+              <Car className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white">РидМаркет</h1>
+          </div>
+          <div className="bg-white rounded-3xl shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Проверьте почту</h2>
+            <p className="text-gray-500 text-sm mb-1">
+              Отправили письмо на
+            </p>
+            <p className="font-semibold text-gray-800 mb-4">{email}</p>
+            <p className="text-gray-400 text-xs mb-6">
+              Перейдите по ссылке в письме чтобы продолжить. Если письмо не пришло — проверьте папку «Спам».
+            </p>
+            <button
+              onClick={() => switchMode('login')}
+              className="btn-primary w-full"
+            >
+              Вернуться ко входу
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
+  // ── Основной рендер ───────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -84,28 +173,27 @@ export default function AuthPage() {
           <p className="text-indigo-200 mt-1 text-sm">Поездки с договорной ценой</p>
         </div>
 
-        {/* Карточка */}
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
 
-          {/* Вкладки Войти / Регистрация */}
-          {mode !== 'reset' && (
+          {/* Вкладки — только для login и register */}
+          {(mode === 'login' || mode === 'register') && (
             <div className="flex border-b border-gray-100">
               <button
-                onClick={() => setMode('login')}
-                className={`flex-1 py-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                onClick={() => switchMode('login')}
+                className={`flex-1 py-4 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                   mode === 'login'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/40'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <LogIn className="w-4 h-4" /> Войти
               </button>
               <button
-                onClick={() => setMode('register')}
-                className={`flex-1 py-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                onClick={() => switchMode('register')}
+                className={`flex-1 py-4 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                   mode === 'register'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/40'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <UserPlus className="w-4 h-4" /> Регистрация
@@ -115,11 +203,32 @@ export default function AuthPage() {
 
           <div className="p-8 space-y-4">
 
-            {/* Заголовок для сброса пароля */}
+            {/* Заголовок сброса пароля */}
             {mode === 'reset' && (
-              <div className="mb-2">
+              <div className="pb-2 border-b border-gray-100">
                 <h2 className="text-xl font-bold text-gray-900">Сброс пароля</h2>
-                <p className="text-sm text-gray-500 mt-1">Отправим ссылку для восстановления</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Отправим ссылку для восстановления на почту
+                </p>
+              </div>
+            )}
+
+            {/* Поле имени — только при регистрации */}
+            {mode === 'register' && (
+              <div>
+                <label className="label">Ваше имя</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    placeholder="Иван Иванов"
+                    className="input pl-10"
+                    autoComplete="name"
+                    autoFocus
+                  />
+                </div>
               </div>
             )}
 
@@ -132,17 +241,21 @@ export default function AuthPage() {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      if (mode === 'reset') handleReset()
+                    }
+                  }}
                   placeholder="example@mail.ru"
                   className="input pl-10"
                   autoComplete="email"
-                  autoFocus
+                  autoFocus={mode !== 'register'}
                 />
               </div>
             </div>
 
-            {/* Пароль */}
-            {mode !== 'reset' && (
+            {/* Пароль — для login и register */}
+            {(mode === 'login' || mode === 'register') && (
               <div>
                 <label className="label">Пароль</label>
                 <div className="relative">
@@ -151,7 +264,9 @@ export default function AuthPage() {
                     type={showPass ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && mode === 'login' && handleSubmit()}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && mode === 'login') handleLogin()
+                    }}
                     placeholder={mode === 'register' ? 'Минимум 6 символов' : '••••••••'}
                     className="input pl-10 pr-10"
                     autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -159,7 +274,7 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -167,7 +282,7 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* Подтверждение пароля — только при регистрации */}
+            {/* Повтор пароля — только при регистрации */}
             {mode === 'register' && (
               <div>
                 <label className="label">Повторите пароль</label>
@@ -177,37 +292,47 @@ export default function AuthPage() {
                     type={showPass ? 'text' : 'password'}
                     value={password2}
                     onChange={e => setPassword2(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                    onKeyDown={e => { if (e.key === 'Enter') handleRegister() }}
                     placeholder="Повторите пароль"
                     className="input pl-10"
                     autoComplete="new-password"
                   />
                 </div>
+                {/* Индикатор совпадения паролей */}
+                {password2.length > 0 && (
+                  <p className={`text-xs mt-1 ${password === password2 ? 'text-green-600' : 'text-rose-500'}`}>
+                    {password === password2 ? '✓ Пароли совпадают' : '✗ Пароли не совпадают'}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Забыл пароль — только при входе */}
+            {/* Ссылка "Забыли пароль" */}
             {mode === 'login' && (
-              <div className="flex justify-end">
+              <div className="flex justify-end -mt-1">
                 <button
-                  onClick={() => { setMode('reset'); setPassword('') }}
-                  className="text-xs text-indigo-600 hover:underline"
+                  onClick={() => switchMode('reset')}
+                  className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
                 >
                   Забыли пароль?
                 </button>
               </div>
             )}
 
-            {/* Кнопка действия */}
+            {/* Главная кнопка */}
             <button
-              onClick={handleSubmit}
+              onClick={
+                mode === 'login'    ? handleLogin
+                : mode === 'register' ? handleRegister
+                : handleReset
+              }
               disabled={loading}
-              className="btn-primary btn-lg w-full mt-2"
+              className="btn-primary btn-lg w-full"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                  {mode === 'login' ? 'Входим...' : mode === 'register' ? 'Создаём...' : 'Отправляем...'}
+                  {mode === 'login' ? 'Входим...' : mode === 'register' ? 'Создаём аккаунт...' : 'Отправляем...'}
                 </span>
               ) : (
                 mode === 'login' ? 'Войти'
@@ -216,11 +341,11 @@ export default function AuthPage() {
               )}
             </button>
 
-            {/* Назад при сбросе пароля */}
+            {/* Кнопка "Назад" при сбросе */}
             {mode === 'reset' && (
               <button
-                onClick={() => setMode('login')}
-                className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors text-center"
+                onClick={() => switchMode('login')}
+                className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors text-center pt-1"
               >
                 ← Вернуться ко входу
               </button>
@@ -229,9 +354,12 @@ export default function AuthPage() {
           </div>
         </div>
 
-        <p className="text-center text-indigo-300 text-xs mt-6">
-          Нажимая «Создать аккаунт», вы соглашаетесь с правилами сервиса
-        </p>
+        {mode !== 'reset' && (
+          <p className="text-center text-indigo-300 text-xs mt-5">
+            Регистрируясь, вы соглашаетесь с правилами сервиса
+          </p>
+        )}
+
       </div>
     </div>
   )
