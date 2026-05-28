@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -27,13 +27,20 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Получаем пользователя
   const { data: { user } } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
 
-  // Если не авторизован и пытается зайти в защищённые разделы — редирект на /auth
-  const protectedPaths = ['/passenger', '/driver', '/market']
+  // Эти страницы всегда доступны — не трогаем их
+  const alwaysAllowed = [
+    '/auth/update-password',
+    '/auth/confirmed',
+  ]
+  if (alwaysAllowed.some(p => pathname.startsWith(p))) {
+    return supabaseResponse
+  }
+
+  // Защищённые разделы — только для авторизованных
+  const protectedPaths = ['/passenger', '/driver', '/market', '/profile']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
   if (!user && isProtected) {
@@ -42,8 +49,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Если авторизован и заходит на /auth — редирект на /
-  if (user && pathname.startsWith('/auth')) {
+  // Авторизованный на /auth → на главную
+  if (user && pathname === '/auth') {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
