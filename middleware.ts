@@ -40,8 +40,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Защищённые разделы — только для авторизованных
-  const protectedPaths = ['/passenger', '/driver', '/market', '/profile']
-  const isProtected = protectedPaths.some(p => pathname.startsWith(p))
+  const protectedPaths = ['/', '/chats', '/passenger', '/driver', '/profile']
+  const marketAuthPaths = ['/market/new', '/market/my', '/market/chat']
+  const isProtected =
+    protectedPaths.some(p => pathname === p || (p !== '/' && pathname.startsWith(p))) ||
+    marketAuthPaths.some(p => pathname.startsWith(p))
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()

@@ -238,6 +238,33 @@ CREATE TABLE public.favorites (
 );
 
 -- ============================================================
+-- ЧАТЫ МАРКЕТА
+-- ============================================================
+CREATE TABLE public.market_chats (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  listing_id      UUID NOT NULL REFERENCES public.market_listings(id) ON DELETE CASCADE,
+  buyer_id        UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  seller_id       UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  last_message    TEXT,
+  last_message_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(listing_id, buyer_id)
+);
+
+CREATE TABLE public.market_messages (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  chat_id     UUID NOT NULL REFERENCES public.market_chats(id) ON DELETE CASCADE,
+  sender_id   UUID NOT NULL REFERENCES public.profiles(id),
+  message     TEXT NOT NULL,
+  is_read     BOOLEAN DEFAULT FALSE,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_market_messages_chat ON public.market_messages(chat_id);
+CREATE INDEX idx_market_chats_buyer ON public.market_chats(buyer_id);
+CREATE INDEX idx_market_chats_seller ON public.market_chats(seller_id);
+
+-- ============================================================
 -- УВЕДОМЛЕНИЯ
 -- ============================================================
 CREATE TABLE public.notifications (
@@ -332,6 +359,58 @@ CREATE POLICY "Drivers manage own status" ON public.driver_status FOR ALL USING 
 ALTER TABLE public.saved_routes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users see own routes" ON public.saved_routes FOR ALL USING (auth.uid() = user_id);
 
+-- Автомобили водителей
+ALTER TABLE public.driver_vehicles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Vehicles viewable by all" ON public.driver_vehicles FOR SELECT USING (TRUE);
+CREATE POLICY "Drivers manage own vehicles" ON public.driver_vehicles FOR ALL USING (auth.uid() = driver_id);
+
+-- Отзывы
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Reviews viewable by all" ON public.reviews FOR SELECT USING (TRUE);
+CREATE POLICY "Users can create reviews" ON public.reviews FOR INSERT WITH CHECK (auth.uid() = reviewer_id);
+
+-- Избранное
+ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own favorites" ON public.favorites FOR ALL USING (auth.uid() = user_id);
+
+-- Чаты маркета
+ALTER TABLE public.market_chats ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Chat participants can view" ON public.market_chats FOR SELECT USING (
+  auth.uid() = buyer_id OR auth.uid() = seller_id
+);
+CREATE POLICY "Buyers can create chats" ON public.market_chats FOR INSERT WITH CHECK (auth.uid() = buyer_id);
+CREATE POLICY "Participants can update chats" ON public.market_chats FOR UPDATE USING (
+  auth.uid() = buyer_id OR auth.uid() = seller_id
+);
+
+-- Сообщения маркета
+ALTER TABLE public.market_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Chat participants can view messages" ON public.market_messages FOR SELECT USING (
+  auth.uid() IN (
+    SELECT buyer_id FROM public.market_chats WHERE id = chat_id
+    UNION
+    SELECT seller_id FROM public.market_chats WHERE id = chat_id
+  )
+);
+CREATE POLICY "Participants can send messages" ON public.market_messages FOR INSERT WITH CHECK (
+  auth.uid() = sender_id AND
+  auth.uid() IN (
+    SELECT buyer_id FROM public.market_chats WHERE id = chat_id
+    UNION
+    SELECT seller_id FROM public.market_chats WHERE id = chat_id
+  )
+);
+CREATE POLICY "Participants can update messages" ON public.market_messages FOR UPDATE USING (
+  auth.uid() IN (
+    SELECT buyer_id FROM public.market_chats WHERE id = chat_id
+    UNION
+    SELECT seller_id FROM public.market_chats WHERE id = chat_id
+  )
+);
+
+-- Realtime для сообщений маркета
+ALTER PUBLICATION supabase_realtime ADD TABLE public.market_messages;
+
 -- ============================================================
 -- ФУНКЦИИ И ТРИГГЕРЫ
 -- ============================================================
@@ -343,8 +422,8 @@ BEGIN
   INSERT INTO public.profiles (id, phone, full_name)
   VALUES (
     NEW.id,
-    NEW.phone,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', '')
+    COALESCE(NEW.phone, NEW.email, NEW.id::text),
+    NULLIF(COALESCE(NEW.raw_user_meta_data->>'full_name', ''), '')
   );
   RETURN NEW;
 END;
@@ -460,3 +539,13 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_rating_on_review
   AFTER INSERT ON public.reviews
   FOR EACH ROW EXECUTE FUNCTION public.update_user_rating();
+
+-- Счётчик просмотров объявления (доступен без авторизации)
+CREATE OR REPLACE FUNCTION public.increment_listing_views(p_listing_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.market_listings
+  SET views_count = views_count + 1
+  WHERE id = p_listing_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

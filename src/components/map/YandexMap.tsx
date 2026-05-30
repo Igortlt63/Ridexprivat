@@ -51,7 +51,11 @@ export default function YandexMap({
     script.onerror = () => setError(true)
     document.head.appendChild(script)
 
-    return () => { document.head.removeChild(script) }
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script)
+      }
+    }
   }, [apiKey])
 
   // Инициализируем карту

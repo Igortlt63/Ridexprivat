@@ -44,8 +44,7 @@ export default function ListingDetailPage() {
         .single()
       setListing(data)
 
-      await supabase.from('market_listings')
-        .update({ views_count: (data?.views_count || 0) + 1 }).eq('id', listingId)
+      await supabase.rpc('increment_listing_views', { p_listing_id: listingId })
 
       if (user) {
         const { data: fav } = await supabase.from('favorites')
@@ -158,7 +157,7 @@ export default function ListingDetailPage() {
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-                  {photos.map((_,i) => (
+                  {photos.map((_: string, i: number) => (
                     <button key={i} onClick={() => setPhotoIdx(i)}
                       className={`w-1.5 h-1.5 rounded-full ${i===photoIdx ? 'bg-white' : 'bg-white/50'}`} />
                   ))}
