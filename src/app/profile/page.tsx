@@ -59,7 +59,7 @@ function EditableField({
       ) : (
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-gray-900">{value || <span className="text-gray-400">{placeholder || 'Не указано'}</span>}</p>
-          <button onClick={() => setEditing(true)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+          <button onClick={() => setEditing(true)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
             <Edit3 className="w-3.5 h-3.5" />
           </button>
         </div>

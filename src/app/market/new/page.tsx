@@ -156,7 +156,7 @@ export default function NewListingPage() {
                 onClick={() => setValue('category_id', cat.id)}
                 className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 text-center transition-all ${
                   categoryId === cat.id
-                    ? 'border-primary-500 bg-primary-50'
+                    ? 'border-indigo-500 bg-indigo-50'
                     : 'border-gray-100 hover:border-gray-200'
                 }`}
               >
@@ -166,7 +166,7 @@ export default function NewListingPage() {
             ))}
           </div>
           {errors.category_id && (
-            <p className="mt-2 text-xs text-danger-500">{errors.category_id.message}</p>
+            <p className="mt-2 text-xs text-rose-500">{errors.category_id.message}</p>
           )}
         </div>
 
@@ -181,7 +181,7 @@ export default function NewListingPage() {
               placeholder="Кратко и понятно..."
               className={`input ${errors.title ? 'input-error' : ''}`}
             />
-            {errors.title && <p className="mt-1 text-xs text-danger-500">{errors.title.message}</p>}
+            {errors.title && <p className="mt-1 text-xs text-rose-500">{errors.title.message}</p>}
           </div>
 
           <div>
@@ -207,7 +207,7 @@ export default function NewListingPage() {
                 onClick={() => setValue('price_type', opt.value as any)}
                 className={`py-2 rounded-xl text-sm font-medium border-2 transition-all ${
                   priceType === opt.value
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                     : 'border-gray-100 text-gray-600 hover:border-gray-200'
                 }`}
               >
@@ -240,7 +240,7 @@ export default function NewListingPage() {
                 <button
                   type="button"
                   onClick={() => removeImage(i)}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center"
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -252,7 +252,7 @@ export default function NewListingPage() {
               </div>
             ))}
             {images.length < 8 && (
-              <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 transition-colors">
+              <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-indigo-400 transition-colors">
                 <Camera className="w-5 h-5 text-gray-400" />
                 <span className="text-xs text-gray-400">Фото</span>
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
@@ -272,7 +272,7 @@ export default function NewListingPage() {
               placeholder="Москва"
               className={`input ${errors.city ? 'input-error' : ''}`}
             />
-            {errors.city && <p className="mt-1 text-xs text-danger-500">{errors.city.message}</p>}
+            {errors.city && <p className="mt-1 text-xs text-rose-500">{errors.city.message}</p>}
           </div>
           <div>
             <label className="label">Адрес (необязательно)</label>
@@ -290,7 +290,7 @@ export default function NewListingPage() {
               placeholder="Как к вам обращаться"
               className={`input ${errors.contact_name ? 'input-error' : ''}`}
             />
-            {errors.contact_name && <p className="mt-1 text-xs text-danger-500">{errors.contact_name.message}</p>}
+            {errors.contact_name && <p className="mt-1 text-xs text-rose-500">{errors.contact_name.message}</p>}
           </div>
           <div>
             <label className="label">Телефон *</label>
@@ -300,7 +300,7 @@ export default function NewListingPage() {
               placeholder="+7 (900) 000-00-00"
               className={`input ${errors.contact_phone ? 'input-error' : ''}`}
             />
-            {errors.contact_phone && <p className="mt-1 text-xs text-danger-500">{errors.contact_phone.message}</p>}
+            {errors.contact_phone && <p className="mt-1 text-xs text-rose-500">{errors.contact_phone.message}</p>}
           </div>
         </div>
 

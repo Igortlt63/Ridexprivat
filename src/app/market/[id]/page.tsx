@@ -158,7 +158,7 @@ export default function ListingDetailPage() {
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-                  {photos.map((photo,i) => (
+                  {photos.map((_,i) => (
                     <button key={i} onClick={() => setPhotoIdx(i)}
                       className={`w-1.5 h-1.5 rounded-full ${i===photoIdx ? 'bg-white' : 'bg-white/50'}`} />
                   ))}

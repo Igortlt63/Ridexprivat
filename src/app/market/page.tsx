@@ -122,7 +122,7 @@ export default function MarketPage() {
               onClick={() => selectCategory(null)}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 selected === null
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-indigo-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -134,7 +134,7 @@ export default function MarketPage() {
                 onClick={() => selectCategory(cat.id)}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   selected === cat.id
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-indigo-600 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -161,7 +161,7 @@ export default function MarketPage() {
         {/* Список объявлений */}
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent" />
           </div>
         ) : listings.length === 0 ? (
           <div className="card p-12 text-center">
@@ -193,7 +193,7 @@ function ListingCard({ listing }: { listing: MarketListing & { category?: Market
     <Link
       href={`/market/${listing.id}`}
       className={`card block hover:shadow-card-hover transition-all active:scale-95 overflow-hidden ${
-        listing.is_promoted ? 'ring-2 ring-primary-200' : ''
+        listing.is_promoted ? 'ring-2 ring-indigo-200' : ''
       }`}
     >
       <div className="flex gap-3 p-4">
@@ -223,7 +223,7 @@ function ListingCard({ listing }: { listing: MarketListing & { category?: Market
           {/* Цена */}
           <div className="mt-1">
             {listing.price_type === 'free' ? (
-              <span className="text-success-700 font-bold text-sm">Бесплатно</span>
+              <span className="text-green-700 font-bold text-sm">Бесплатно</span>
             ) : listing.price_type === 'negotiable' ? (
               <span className="text-gray-600 text-sm">Договорная</span>
             ) : listing.price ? (
