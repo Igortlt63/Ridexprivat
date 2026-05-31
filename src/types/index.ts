@@ -196,31 +196,6 @@ export interface MarketListing {
   category?: MarketCategory
 }
 
-export interface MarketChat {
-  id: string
-  listing_id: string
-  buyer_id: string
-  seller_id: string
-  last_message: string | null
-  last_message_at: string
-  created_at: string
-
-  listing?: Pick<MarketListing, 'title' | 'images'>
-  buyer?: Pick<Profile, 'full_name'>
-  seller?: Pick<Profile, 'full_name'>
-}
-
-export interface MarketMessage {
-  id: string
-  chat_id: string
-  sender_id: string
-  message: string
-  is_read: boolean
-  created_at: string
-
-  sender?: Pick<Profile, 'full_name'>
-}
-
 // ============================================================
 // УВЕДОМЛЕНИЯ
 // ============================================================
