@@ -3,41 +3,51 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Car, Star, ShoppingBag, Bell, MessageSquare, ChevronRight, MapPin, Clock } from 'lucide-react'
+import { User, Car, Star, ShoppingBag, MessageSquare, ChevronRight, MapPin, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
 
 export default function HomePage() {
   const router   = useRouter()
   const supabase = createClient()
-  const [profile, setProfile]   = useState<Profile | null>(null)
-  const [unread,  setUnread]    = useState(0)
-  const [loading, setLoading]   = useState(true)
+
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [unread,  setUnread]  = useState(0)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
 
+      // Загружаем профиль — это критично
       const { data: prof } = await supabase
         .from('profiles').select('*').eq('id', user.id).single()
       setProfile(prof)
+      setLoading(false) // показываем страницу сразу после профиля
 
-      // Считаем непрочитанные сообщения
-      const { count } = await supabase
-        .from('market_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_read', false)
-        .neq('sender_id', user.id)
-      setUnread(count || 0)
-      setLoading(false)
+      // Счётчик непрочитанных — в фоне, не блокируем рендер
+      try {
+        const { count } = await supabase
+          .from('market_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_read', false)
+          .neq('sender_id', user.id)
+        setUnread(count || 0)
+      } catch {
+        // Таблица может не существовать — просто игнорируем
+        setUnread(0)
+      }
     }
     load()
   }, [])
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent" />
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-600 border-t-transparent mx-auto mb-3" />
+        <p className="text-sm text-gray-400">Загружаем...</p>
+      </div>
     </div>
   )
 
@@ -49,7 +59,9 @@ export default function HomePage() {
       <header className="bg-white border-b border-gray-100 px-4 py-3 sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Car className="w-6 h-6 text-indigo-600" />
+            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+              <Car className="w-4 h-4 text-white" />
+            </div>
             <span className="font-bold text-gray-900 text-lg">РидМаркет</span>
           </div>
           <div className="flex items-center gap-1">
@@ -65,7 +77,11 @@ export default function HomePage() {
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} className="w-6 h-6 rounded-lg object-cover" alt="" />
               ) : (
-                <User className="w-5 h-5" />
+                <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xs font-bold text-indigo-600">
+                    {profile?.full_name?.[0]?.toUpperCase() || '?'}
+                  </span>
+                </div>
               )}
             </Link>
           </div>
@@ -94,7 +110,7 @@ export default function HomePage() {
             <div className="flex items-center gap-1 text-xs text-gray-400">
               <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span>{Number(profile?.rating_passenger || 5).toFixed(1)}</span>
-              <span>· {profile?.total_rides_as_passenger} поездок</span>
+              <span>· {profile?.total_rides_as_passenger || 0} поездок</span>
             </div>
           </Link>
 
@@ -111,7 +127,7 @@ export default function HomePage() {
             <div className="flex items-center gap-1 text-xs text-gray-400">
               <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span>{Number(profile?.rating_driver || 5).toFixed(1)}</span>
-              <span>· {profile?.total_rides_as_driver} рейсов</span>
+              <span>· {profile?.total_rides_as_driver || 0} рейсов</span>
             </div>
           </Link>
         </div>
@@ -135,15 +151,17 @@ export default function HomePage() {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Быстрые действия</p>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { href: '/passenger/new-ride', icon: MapPin,       label: 'Создать заявку',  color: 'text-indigo-400' },
-              { href: '/passenger/history',  icon: Clock,        label: 'История поездок', color: 'text-green-500' },
-              { href: '/chats',              icon: MessageSquare, label: 'Сообщения',      color: 'text-blue-400' },
-              { href: '/profile',            icon: User,         label: 'Мой профиль',     color: 'text-gray-400' },
+              { href: '/passenger/new-ride', icon: MapPin,        label: 'Создать заявку',  color: 'text-indigo-500', bg: 'bg-indigo-50' },
+              { href: '/passenger/history',  icon: Clock,         label: 'История поездок', color: 'text-green-600',  bg: 'bg-green-50' },
+              { href: '/chats',              icon: MessageSquare, label: 'Сообщения',        color: 'text-blue-500',   bg: 'bg-blue-50' },
+              { href: '/profile',            icon: User,          label: 'Мой профиль',     color: 'text-gray-500',   bg: 'bg-gray-100' },
             ].map(item => (
               <Link key={item.href} href={item.href}
                 className="card p-3.5 flex items-center gap-3 hover:shadow-md transition-all active:scale-95"
               >
-                <item.icon className={`w-5 h-5 ${item.color} flex-shrink-0`} />
+                <div className={`w-9 h-9 ${item.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <item.icon className={`w-4.5 h-4.5 ${item.color}`} />
+                </div>
                 <span className="text-sm font-medium text-gray-700">{item.label}</span>
               </Link>
             ))}

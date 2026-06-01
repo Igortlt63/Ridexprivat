@@ -1,5 +1,3 @@
-// middleware.ts — защита маршрутов и автообновление сессии
-
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -15,9 +13,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -27,43 +23,37 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Эти страницы всегда доступны — не трогаем их
-  const alwaysAllowed = [
-    '/auth/update-password',
-    '/auth/confirmed',
-  ]
-  if (alwaysAllowed.some(p => pathname.startsWith(p))) {
+  // Эти страницы всегда доступны без проверки сессии
+  const publicPaths = ['/auth', '/auth/update-password', '/auth/confirmed']
+  if (publicPaths.some(p => pathname.startsWith(p))) {
     return supabaseResponse
   }
 
-  // Защищённые разделы — только для авторизованных
-  const protectedPaths = ['/', '/chats', '/passenger', '/driver', '/profile']
-  const marketAuthPaths = ['/market/new', '/market/my', '/market/chat']
-  const isProtected =
-    protectedPaths.some(p => pathname === p || (p !== '/' && pathname.startsWith(p))) ||
-    marketAuthPaths.some(p => pathname.startsWith(p))
-
-  if (!user && isProtected) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth'
-    return NextResponse.redirect(url)
+  // Статические ресурсы — пропускаем
+  if (pathname.startsWith('/_next') || pathname.includes('.')) {
+    return supabaseResponse
   }
 
-  // Авторизованный на /auth → на главную
-  if (user && pathname === '/auth') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const protectedPaths = ['/passenger', '/driver', '/market', '/profile', '/chats']
+    const isProtected    = protectedPaths.some(p => pathname.startsWith(p))
+
+    if (!user && isProtected) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth'
+      return NextResponse.redirect(url)
+    }
+  } catch {
+    // При ошибке Supabase — просто пропускаем, клиент разберётся
   }
 
   return supabaseResponse
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

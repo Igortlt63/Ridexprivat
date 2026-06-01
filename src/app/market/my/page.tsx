@@ -1,55 +1,138 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ChevronLeft, Plus, Eye, Edit3, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import type { MarketListing, MarketCategory } from '@/types'
-import { formatDistanceToNow } from 'date-fns'
-import { ru } from 'date-fns/locale'
 import toast from 'react-hot-toast'
+import { ChevronLeft, Camera, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
-const CATEGORY_ICONS: Record<string, string> = {
-  services:'🔧', real_estate:'🏠', cargo:'🚛', special_tech:'🚜', hotels:'🏨',
-  cars_sale:'🚗', cars_rent:'🔑', spare_parts:'⚙️', wheels:'🛞', car_wash:'💦', car_service:'🔩',
-}
+// Категории захардкожены как fallback — не зависим от БД при загрузке
+const DEFAULT_CATEGORIES = [
+  { id: 1,  slug: 'services',     name: 'Услуги',           icon: '🔧' },
+  { id: 2,  slug: 'real_estate',  name: 'Недвижимость',     icon: '🏠' },
+  { id: 3,  slug: 'cargo',        name: 'Грузоперевозки',   icon: '🚛' },
+  { id: 4,  slug: 'special_tech', name: 'Спецтехника',      icon: '🚜' },
+  { id: 5,  slug: 'hotels',       name: 'Гостиницы',        icon: '🏨' },
+  { id: 6,  slug: 'cars_sale',    name: 'Авто на продажу',  icon: '🚗' },
+  { id: 7,  slug: 'cars_rent',    name: 'Авто в аренду',    icon: '🔑' },
+  { id: 8,  slug: 'spare_parts',  name: 'Запчасти',         icon: '⚙️' },
+  { id: 9,  slug: 'wheels',       name: 'Колёса / шины',    icon: '🛞' },
+  { id: 10, slug: 'car_wash',     name: 'Автомойки',        icon: '💦' },
+  { id: 11, slug: 'car_service',  name: 'Автосервисы',      icon: '🔩' },
+]
 
-export default function MyListingsPage() {
+const PRICE_TYPE_OPTIONS = [
+  { value: 'fixed',      label: 'Фиксированная' },
+  { value: 'negotiable', label: 'Договорная' },
+  { value: 'free',       label: 'Бесплатно' },
+  { value: 'per_hour',   label: 'За час' },
+  { value: 'per_day',    label: 'За день' },
+]
+
+export default function NewListingPage() {
   const router   = useRouter()
   const supabase = createClient()
-  const [listings, setListings] = useState<any[]>([])
-  const [loading,  setLoading]  = useState(true)
+
+  const [categories,   setCategories]   = useState(DEFAULT_CATEGORIES)
+  const [categoryId,   setCategoryId]   = useState<number | null>(null)
+  const [title,        setTitle]        = useState('')
+  const [description,  setDescription]  = useState('')
+  const [price,        setPrice]        = useState('')
+  const [priceType,    setPriceType]    = useState('fixed')
+  const [city,         setCity]         = useState('')
+  const [address,      setAddress]      = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactName,  setContactName]  = useState('')
+  const [images,       setImages]       = useState<File[]>([])
+  const [previews,     setPreviews]     = useState<string[]>([])
+  const [submitting,   setSubmitting]   = useState(false)
+  const [errors,       setErrors]       = useState<Record<string, string>>({})
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth'); return }
+    // Загружаем категории из БД — но показываем дефолтные сразу
+    supabase.from('market_categories').select('*').order('sort_order')
+      .then(({ data }) => { if (data && data.length > 0) setCategories(data as any) })
 
-      const { data } = await supabase
-        .from('market_listings')
-        .select('*, category:market_categories(name, slug)')
-        .eq('author_id', user.id)
-        .neq('status', 'sold')
-        .order('created_at', { ascending: false })
-      setListings(data || [])
-      setLoading(false)
-    }
-    load()
+    // Автозаполняем контакты
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { data: prof } = await supabase.from('profiles')
+        .select('phone, full_name').eq('id', user.id).single()
+      if (prof?.phone)     setContactPhone(prof.phone)
+      if (prof?.full_name) setContactName(prof.full_name)
+    })
   }, [])
 
-  async function toggleStatus(id: string, current: string) {
-    const newStatus = current === 'active' ? 'inactive' : 'active'
-    await supabase.from('market_listings').update({ status: newStatus }).eq('id', id)
-    setListings(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))
-    toast.success(newStatus === 'active' ? 'Объявление активировано' : 'Объявление скрыто')
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || [])
+    if (images.length + files.length > 8) { toast.error('Максимум 8 фото'); return }
+    const newFiles    = [...images, ...files]
+    setImages(newFiles)
+    setPreviews(newFiles.map(f => URL.createObjectURL(f)))
   }
 
-  async function deleteListing(id: string) {
-    if (!confirm('Удалить объявление?')) return
-    await supabase.from('market_listings').update({ status: 'sold' }).eq('id', id)
-    setListings(prev => prev.filter(l => l.id !== id))
-    toast.success('Объявление удалено')
+  function removeImage(idx: number) {
+    const newFiles = images.filter((_, i) => i !== idx)
+    setImages(newFiles)
+    setPreviews(newFiles.map(f => URL.createObjectURL(f)))
+  }
+
+  function validate() {
+    const e: Record<string, string> = {}
+    if (!categoryId)                     e.category = 'Выберите категорию'
+    if (title.trim().length < 5)         e.title    = 'Минимум 5 символов'
+    if (city.trim().length < 2)          e.city     = 'Укажите город'
+    if (contactPhone.trim().length < 10) e.phone    = 'Введите телефон'
+    if (contactName.trim().length < 2)   e.name     = 'Введите имя'
+    if (priceType !== 'free' && priceType !== 'negotiable' && !price) e.price = 'Укажите цену'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  async function onSubmit() {
+    if (!validate()) { toast.error('Заполните обязательные поля'); return }
+
+    setSubmitting(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/auth'); return }
+
+    // Загружаем фото
+    const uploadedUrls: string[] = []
+    for (const file of images) {
+      const ext  = file.name.split('.').pop()
+      const path = `listings/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      const { error: upErr } = await supabase.storage.from('market').upload(path, file)
+      if (!upErr) {
+        const { data: { publicUrl } } = supabase.storage.from('market').getPublicUrl(path)
+        uploadedUrls.push(publicUrl)
+      }
+    }
+
+    const { data: listing, error } = await supabase.from('market_listings').insert({
+      author_id:     user.id,
+      category_id:   categoryId,
+      title:         title.trim(),
+      description:   description.trim() || null,
+      price:         priceType === 'free' || priceType === 'negotiable' ? null : (parseFloat(price) || null),
+      price_type:    priceType,
+      city:          city.trim(),
+      address:       address.trim() || null,
+      contact_phone: contactPhone.trim(),
+      contact_name:  contactName.trim(),
+      images:        uploadedUrls,
+      status:        'active',
+    }).select().single()
+
+    setSubmitting(false)
+
+    if (error) {
+      console.error('Insert error:', error)
+      toast.error('Ошибка: ' + error.message)
+      return
+    }
+
+    toast.success('Объявление опубликовано!')
+    router.push(`/market/${listing.id}`)
   }
 
   return (
@@ -60,78 +143,166 @@ export default function MyListingsPage() {
             <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Мои объявления</h1>
+            <h1 className="text-lg font-bold text-gray-900">Новое объявление</h1>
           </div>
-          <Link href="/market/new" className="btn-primary btn-sm gap-1.5">
-            <Plus className="w-4 h-4" /> Подать
-          </Link>
+          <button onClick={onSubmit} disabled={submitting} className="btn-primary btn-sm">
+            {submitting ? '...' : 'Опубликовать'}
+          </button>
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent" />
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="card p-10 text-center">
-            <p className="text-3xl mb-3">📢</p>
-            <p className="text-gray-500 font-medium">У вас нет объявлений</p>
-            <Link href="/market/new" className="btn-primary btn-sm mt-4 inline-flex">
-              Подать первое объявление
-            </Link>
-          </div>
-        ) : listings.map(l => (
-          <div key={l.id} className="card p-4">
-            <div className="flex gap-3">
-              {l.images?.[0] ? (
-                <img src={l.images[0]} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" alt="" />
-              ) : (
-                <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">{CATEGORY_ICONS[l.category?.slug] || '📦'}</span>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm truncate">{l.title}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {l.category?.name} · {formatDistanceToNow(new Date(l.created_at), { addSuffix: true, locale: ru })}
-                </p>
-                {l.price && (
-                  <p className="font-bold text-indigo-600 text-sm mt-1">
-                    {l.price.toLocaleString('ru-RU')} ₽
-                  </p>
-                )}
-                <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
-                  <Eye className="w-3 h-3" /> {l.views_count} просмотров
-                </div>
-              </div>
-            </div>
+      <div className="max-w-lg mx-auto px-4 py-4 space-y-4 pb-10">
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-              <div className="flex items-center gap-1.5">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  l.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
-                }`}>
-                  {l.status === 'active' ? 'Активно' : 'Скрыто'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => toggleStatus(l.id, l.status)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors">
-                  {l.status === 'active'
-                    ? <ToggleRight className="w-5 h-5 text-indigo-600" />
-                    : <ToggleLeft className="w-5 h-5" />
-                  }
-                </button>
-                <Link href={`/market/${l.id}/edit`} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors">
-                  <Edit3 className="w-4 h-4" />
-                </Link>
-                <button onClick={() => deleteListing(l.id)} className="p-1.5 text-gray-400 hover:text-rose-500 rounded-lg transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+        {/* Категория — всегда показываем, не ждём загрузки */}
+        <div className="card p-4">
+          <p className="font-semibold text-gray-900 mb-3">
+            Категория <span className="text-rose-500">*</span>
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => { setCategoryId(cat.id); setErrors(e => ({ ...e, category: '' })) }}
+                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all text-center ${
+                  categoryId === cat.id
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-gray-100 hover:border-indigo-200 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-xl">{(cat as any).icon || '📦'}</span>
+                <span className="text-xs font-medium text-gray-700 leading-tight">{cat.name}</span>
+              </button>
+            ))}
           </div>
-        ))}
+          {errors.category && <p className="mt-2 text-xs text-rose-500">{errors.category}</p>}
+        </div>
+
+        {/* Описание */}
+        <div className="card p-4 space-y-4">
+          <p className="font-semibold text-gray-900">Описание</p>
+          <div>
+            <label className="label">Заголовок <span className="text-rose-500">*</span></label>
+            <input
+              type="text" value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="Кратко и понятно..."
+              className={`input ${errors.title ? 'input-error' : ''}`}
+            />
+            {errors.title && <p className="mt-1 text-xs text-rose-500">{errors.title}</p>}
+          </div>
+          <div>
+            <label className="label">Описание</label>
+            <textarea
+              value={description} onChange={e => setDescription(e.target.value)}
+              rows={4} placeholder="Подробнее об объявлении..." className="input resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Цена */}
+        <div className="card p-4 space-y-3">
+          <p className="font-semibold text-gray-900">Цена</p>
+          <div className="grid grid-cols-2 gap-2">
+            {PRICE_TYPE_OPTIONS.map(opt => (
+              <button key={opt.value} type="button" onClick={() => setPriceType(opt.value)}
+                className={`py-2 rounded-xl text-sm font-medium border-2 transition-all ${
+                  priceType === opt.value
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-100 text-gray-600 hover:border-gray-200'
+                }`}
+              >{opt.label}</button>
+            ))}
+          </div>
+          {priceType !== 'free' && priceType !== 'negotiable' && (
+            <div>
+              <label className="label">Сумма (₽) <span className="text-rose-500">*</span></label>
+              <input
+                type="number" value={price} onChange={e => setPrice(e.target.value)}
+                min={0} placeholder="0"
+                className={`input ${errors.price ? 'input-error' : ''}`}
+              />
+              {errors.price && <p className="mt-1 text-xs text-rose-500">{errors.price}</p>}
+            </div>
+          )}
+        </div>
+
+        {/* Фото */}
+        <div className="card p-4">
+          <p className="font-semibold text-gray-900 mb-3">Фотографии</p>
+          <div className="flex flex-wrap gap-2">
+            {previews.map((src, i) => (
+              <div key={i} className="relative w-20 h-20">
+                <img src={src} alt="" className="w-20 h-20 rounded-xl object-cover" />
+                <button type="button" onClick={() => removeImage(i)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center">
+                  <X className="w-3 h-3" />
+                </button>
+                {i === 0 && (
+                  <span className="absolute bottom-0 left-0 right-0 text-center text-white text-xs bg-black/40 rounded-b-xl py-0.5">
+                    Главное
+                  </span>
+                )}
+              </div>
+            ))}
+            {images.length < 8 && (
+              <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-indigo-400 transition-colors">
+                <Camera className="w-5 h-5 text-gray-400" />
+                <span className="text-xs text-gray-400">Фото</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+              </label>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-2">До 8 фото · Первое — главное</p>
+        </div>
+
+        {/* Местоположение */}
+        <div className="card p-4 space-y-3">
+          <p className="font-semibold text-gray-900">Местоположение</p>
+          <div>
+            <label className="label">Город <span className="text-rose-500">*</span></label>
+            <input type="text" value={city} onChange={e => setCity(e.target.value)}
+              placeholder="Москва"
+              className={`input ${errors.city ? 'input-error' : ''}`}
+            />
+            {errors.city && <p className="mt-1 text-xs text-rose-500">{errors.city}</p>}
+          </div>
+          <div>
+            <label className="label">Адрес (необязательно)</label>
+            <input type="text" value={address} onChange={e => setAddress(e.target.value)}
+              placeholder="Улица, дом" className="input" />
+          </div>
+        </div>
+
+        {/* Контакты */}
+        <div className="card p-4 space-y-3">
+          <p className="font-semibold text-gray-900">Контакты</p>
+          <div>
+            <label className="label">Имя <span className="text-rose-500">*</span></label>
+            <input type="text" value={contactName} onChange={e => setContactName(e.target.value)}
+              placeholder="Как к вам обращаться"
+              className={`input ${errors.name ? 'input-error' : ''}`}
+            />
+            {errors.name && <p className="mt-1 text-xs text-rose-500">{errors.name}</p>}
+          </div>
+          <div>
+            <label className="label">Телефон <span className="text-rose-500">*</span></label>
+            <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)}
+              placeholder="+7 (900) 000-00-00"
+              className={`input ${errors.phone ? 'input-error' : ''}`}
+            />
+            {errors.phone && <p className="mt-1 text-xs text-rose-500">{errors.phone}</p>}
+          </div>
+        </div>
+
+        <button type="button" onClick={onSubmit} disabled={submitting} className="btn-primary btn-lg w-full">
+          {submitting ? (
+            <span className="flex items-center gap-2">
+              <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+              Публикуем...
+            </span>
+          ) : '📢 Опубликовать объявление'}
+        </button>
+        <p className="text-center text-xs text-gray-400 pb-4">Объявление будет активно 30 дней</p>
       </div>
     </div>
   )
