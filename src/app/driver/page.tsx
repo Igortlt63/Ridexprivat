@@ -267,13 +267,26 @@ export default function DriverPage() {
         })
         .on('postgres_changes', {
           event: 'UPDATE', schema: 'public', table: 'rides',
-        }, ({ new: u }) => {
+        }, async ({ new: u }) => {
+          // Убираем из списка поиска если статус изменился
           if (u.status !== 'searching') {
             setRides(prev => prev.filter(r => r.id !== u.id))
           }
-          // Обновляем активную поездку
+          // Устанавливаем активную поездку водителя
           if (u.driver_id === user.id && ['accepted', 'in_progress'].includes(u.status)) {
-            setActiveRide((prev: any) => prev ? { ...prev, ...u } : null)
+            // Подгружаем полные данные с пассажиром
+            const { data: full } = await supabase
+              .from('rides')
+              .select('*, passenger:profiles!rides_passenger_id_fkey(*)')
+              .eq('id', u.id).single()
+            if (full) {
+              setActiveRide(full)
+              if (u.status === 'accepted') toast.success('✅ Пассажир принял ваше предложение!')
+            }
+          }
+          // Сбрасываем если поездка завершена/отменена
+          if (['completed', 'cancelled'].includes(u.status)) {
+            setActiveRide((prev: any) => prev?.id === u.id ? null : prev)
           }
         })
         .subscribe()

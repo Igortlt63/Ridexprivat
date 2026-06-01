@@ -207,7 +207,7 @@ export default function NewRidePage() {
     setSubmitting(false)
     if (error) { console.error(error); toast.error('Ошибка создания заявки'); return }
     toast.success('Заявка создана! Ищем водителей...')
-    router.push(`/passenger/ride/${ride.id}`)
+    router.replace(`/passenger/ride/${ride.id}`)
   }
 
   return (
