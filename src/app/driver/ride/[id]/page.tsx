@@ -87,9 +87,11 @@ export default function DriverRidePage() {
       async pos => {
         const { latitude: lat, longitude: lng } = pos.coords
         setMyPos({ lat, lng })
-        await supabase.rpc('update_driver_location', {
-          p_driver_id: driverId, p_lat: lat, p_lng: lng
-        }).catch(() => {})
+        try {
+          await supabase.rpc('update_driver_location', {
+            p_driver_id: driverId, p_lat: lat, p_lng: lng
+          })
+        } catch {}
       },
       () => {}, opts
     )
