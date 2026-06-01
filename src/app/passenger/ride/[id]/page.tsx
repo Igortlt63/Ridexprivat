@@ -335,19 +335,19 @@ export default function RideDetailPage() {
 
         {/* Карта */}
         {tab === 'map' && (
-          <div className="flex-1 relative min-h-0">
+          <div className="relative" style={{ height: 'calc(100vh - 200px)' }}>
             <YandexMap
               mode={driverPos ? 'track' : 'route'}
               apiKey={apiKey}
               driverLat={driverPos?.lat}
               driverLng={driverPos?.lng}
-              passengerLat={ride.status === 'accepted' ? ride.origin_lat : undefined}
-              passengerLng={ride.status === 'accepted' ? ride.origin_lng : undefined}
+              passengerLat={ride.origin_lat}
+              passengerLng={ride.origin_lng}
               originLat={ride.origin_lat}
               originLng={ride.origin_lng}
               destLat={ride.dest_lat}
               destLng={ride.dest_lng}
-              height="100%"
+              height="calc(100vh - 200px)"
             />
             {/* Адрес поверх карты */}
             <div className="absolute bottom-4 left-4 right-4 z-10">
