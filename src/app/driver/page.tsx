@@ -10,6 +10,7 @@ import {
   Banknote, Car, Map, List, ChevronLeft, Navigation
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import LiveIndicator from '@/components/ui/LiveIndicator'
 import type { Ride, Profile, DriverVehicle } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -361,11 +362,15 @@ export default function DriverPage() {
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Водитель</h1>
                 {profile && (
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                    <span className="text-xs text-gray-500">
-                      {Number(profile.rating_driver).toFixed(1)} · {profile.total_rides_as_driver} рейсов
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                      <span className="text-xs text-gray-500">
+                        {Number(profile.rating_driver).toFixed(1)} · {profile.total_rides_as_driver} рейсов
+                      </span>
+                    </div>
+                    <span className="text-gray-300">·</span>
+                    <LiveIndicator />
                   </div>
                 )}
               </div>

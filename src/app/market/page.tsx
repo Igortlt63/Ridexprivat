@@ -55,6 +55,38 @@ export default function MarketPage() {
       setLoading(false)
     }
     load()
+
+    // Realtime — новые объявления появляются автоматически
+    const channel = supabase.channel('market-listings-live')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'market_listings',
+      }, async ({ new: listing }) => {
+        // Подгружаем полные данные с категорией и автором
+        const { data } = await supabase
+          .from('market_listings')
+          .select('*, category:market_categories(*), author:profiles(*)')
+          .eq('id', listing.id).single()
+        if (data && data.status === 'active') {
+          setListings(prev => {
+            if (prev.find(l => l.id === data.id)) return prev
+            return [data as MarketListing, ...prev]
+          })
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'market_listings',
+      }, ({ new: updated }) => {
+        setListings(prev => {
+          // Если объявление стало неактивным — убираем
+          if (updated.status !== 'active') {
+            return prev.filter(l => l.id !== updated.id)
+          }
+          return prev.map(l => l.id === updated.id ? { ...l, ...updated } as MarketListing : l)
+        })
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   async function loadListings(categoryId: number | null, q: string) {

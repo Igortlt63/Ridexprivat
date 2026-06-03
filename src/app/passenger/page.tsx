@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Clock, MapPin, Star, ChevronRight, Package, AlertCircle, ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import LiveIndicator from '@/components/ui/LiveIndicator'
 import type { Ride, Profile } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -41,15 +42,43 @@ export default function PassengerPage() {
       setActiveRides(rides || [])
       setLoading(false)
 
-      // Realtime
-      const channel = supabase.channel('passenger-rides')
+      // Realtime — отслеживаем все изменения поездок пассажира
+      const channel = supabase.channel(`passenger-rides-${user.id}`)
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'rides', filter: `passenger_id=eq.${user.id}`,
         }, (payload) => {
           if (payload.eventType === 'UPDATE') {
-            setActiveRides(prev => prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } as Ride : r))
+            const updated = payload.new as Ride
+            // Если поездка стала неактивной — убираем из списка активных
+            if (!['searching', 'negotiating', 'accepted', 'in_progress'].includes(updated.status)) {
+              setActiveRides(prev => prev.filter(r => r.id !== updated.id))
+            } else {
+              setActiveRides(prev => {
+                const exists = prev.find(r => r.id === updated.id)
+                if (exists) return prev.map(r => r.id === updated.id ? { ...r, ...updated } : r)
+                return [updated, ...prev]
+              })
+            }
           } else if (payload.eventType === 'INSERT') {
-            setActiveRides(prev => [payload.new as Ride, ...prev])
+            setActiveRides(prev => {
+              if (prev.find(r => r.id === payload.new.id)) return prev
+              return [payload.new as Ride, ...prev]
+            })
+          } else if (payload.eventType === 'DELETE') {
+            setActiveRides(prev => prev.filter(r => r.id !== (payload.old as Ride).id))
+          }
+        })
+        // Также слушаем новые офферы — чтобы пометить статус "новое предложение"
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'ride_offers',
+        }, async ({ new: offer }) => {
+          // Проверяем что оффер для нашей поездки
+          const { data: ride } = await supabase
+            .from('rides').select('passenger_id').eq('id', offer.ride_id).single()
+          if (ride?.passenger_id === user.id) {
+            setActiveRides(prev => prev.map(r =>
+              r.id === offer.ride_id ? { ...r, status: 'negotiating' as any } : r
+            ))
           }
         })
         .subscribe()
@@ -76,11 +105,15 @@ export default function PassengerPage() {
             <div>
               <h1 className="text-xl font-bold text-gray-900">Пассажир</h1>
               {profile && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                  <span className="text-xs text-gray-500">
-                    {Number(profile.rating_passenger).toFixed(1)} · {profile.total_rides_as_passenger} поездок
-                  </span>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                    <span className="text-xs text-gray-500">
+                      {Number(profile.rating_passenger).toFixed(1)} · {profile.total_rides_as_passenger} поездок
+                    </span>
+                  </div>
+                  <span className="text-gray-300">·</span>
+                  <LiveIndicator />
                 </div>
               )}
             </div>
