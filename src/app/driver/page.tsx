@@ -287,7 +287,11 @@ export default function DriverPage() {
               .eq('id', u.id).single()
             if (full) {
               setActiveRide(full)
-              if (u.status === 'accepted') toast.success('✅ Пассажир принял ваше предложение!')
+              if (u.status === 'accepted') {
+                toast.success('✅ Пассажир принял ваше предложение!')
+                // Автопереход на экран поездки
+                router.push(`/driver/ride/${u.id}`)
+              }
             }
           }
           // Сбрасываем если поездка завершена/отменена

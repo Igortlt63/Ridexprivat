@@ -94,7 +94,7 @@ export default function RideDetailPage() {
       }
 
       const [{ data: offersData }, { data: msgs }] = await Promise.all([
-        supabase.from('ride_offers').select('*, driver:profiles(*), vehicle:driver_vehicles(brand,model,year,color,plate_number,photo_url,seats_count)')
+        supabase.from('ride_offers').select('*, driver:profiles(*), vehicle:driver_vehicles!ride_offers_vehicle_id_fkey(brand,model,year,color,plate_number,photo_url,seats_count)')
           .eq('ride_id', rideId).eq('status', 'pending')
           .order('created_at', { ascending: false }),
         supabase.from('ride_messages').select('*, sender:profiles(*)')
@@ -154,7 +154,7 @@ export default function RideDetailPage() {
           filter: `ride_id=eq.${rideId}`,
         }, async ({ new: offer }) => {
           const { data } = await supabase
-            .from('ride_offers').select('*, driver:profiles(*), vehicle:driver_vehicles(brand,model,year,color,plate_number,photo_url,seats_count)')
+            .from('ride_offers').select('*, driver:profiles(*), vehicle:driver_vehicles!ride_offers_vehicle_id_fkey(brand,model,year,color,plate_number,photo_url,seats_count)')
             .eq('id', offer.id).single()
           if (data) {
             setOffers(prev => {
@@ -204,13 +204,16 @@ export default function RideDetailPage() {
   }, [rideId])
 
   async function acceptOffer(offer: any) {
-    await supabase.from('ride_offers').update({ status: 'accepted' }).eq('id', offer.id)
+    const { error } = await supabase.from('ride_offers').update({ status: 'accepted' }).eq('id', offer.id)
+    if (error) { toast.error('Ошибка: ' + error.message); return }
     await supabase.from('ride_offers').update({ status: 'rejected' })
       .eq('ride_id', rideId).neq('id', offer.id)
     await supabase.from('rides').update({
       status: 'accepted', driver_id: offer.driver_id, final_price: offer.offered_price,
     }).eq('id', rideId)
     setOffers([])
+    toast.success('🚗 Водитель принят! Ожидайте.')
+    setTab('map')
   }
 
   async function rejectOffer(offerId: string) {

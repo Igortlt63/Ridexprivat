@@ -31,12 +31,15 @@ async function geocodeAddress(query: string, apiKey: string) {
 
 // Обратное геокодирование — координаты → адрес
 async function reverseGeocode(lat: number, lng: number, apiKey: string) {
+  if (!apiKey || apiKey === 'undefined') return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
   try {
     const url  = `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${lng},${lat}&results=1&format=json&lang=ru_RU`
     const res  = await fetch(url)
+    if (!res.ok) return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
     const json = await res.json()
     const obj  = json?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject
-    return obj?.metaDataProperty?.GeocoderMetaData?.text || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+    const addr = obj?.metaDataProperty?.GeocoderMetaData?.text
+    return addr || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
   } catch { return `${lat.toFixed(5)}, ${lng.toFixed(5)}` }
 }
 

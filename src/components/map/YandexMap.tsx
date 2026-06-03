@@ -111,15 +111,30 @@ export default function YandexMap({
         )
         map.geoObjects.add(pm)
         markerRef.current = pm
+
+        // Сначала пробуем через ymaps, если не вышло — через HTTP API
+        let addr = ''
         try {
-          const res  = await ymaps.geocode(coords, { results: 1 })
-          const addr = res.geoObjects.get(0)?.getAddressLine()
-            || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
-          pm.properties.set('balloonContent', addr)
-          onPick(lat, lng, addr)
-        } catch {
-          onPick(lat, lng, `${lat.toFixed(5)}, ${lng.toFixed(5)}`)
+          const res = await ymaps.geocode(coords, { results: 1 })
+          addr = res.geoObjects.get(0)?.getAddressLine() || ''
+        } catch {}
+
+        if (!addr) {
+          // Fallback: HTTP Geocoder API
+          try {
+            const url  = `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${lng},${lat}&results=1&format=json&lang=ru_RU`
+            const resp = await fetch(url)
+            const json = await resp.json()
+            addr = json?.response?.GeoObjectCollection?.featureMember?.[0]
+              ?.GeoObject?.metaDataProperty?.GeocoderMetaData?.text || ''
+          } catch {}
         }
+
+        // Если оба способа не дали адрес — показываем координаты
+        if (!addr) addr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+
+        pm.properties.set('balloonContent', addr)
+        onPick(lat, lng, addr)
       })
     }
 
