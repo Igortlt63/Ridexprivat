@@ -8,6 +8,8 @@ import {
   Star, Send, Navigation, Map
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import type { Ride, RideMessage } from '@/types'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import dynamic from 'next/dynamic'
 
 const YandexMap = dynamic(() => import('@/components/map/YandexMap'), { ssr: false })
@@ -19,15 +21,16 @@ export default function DriverRidePage() {
   const supabase = createClient()
   const apiKey   = process.env.NEXT_PUBLIC_YANDEX_MAPS_KEY || ''
 
-  const [ride,     setRide]     = useState<any>(null)
-  const [messages, setMessages] = useState<any[]>([])
+  const [ride,     setRide]     = useState<Ride | null>(null)
+  const [messages, setMessages] = useState<RideMessage[]>([])
   const [myId,     setMyId]     = useState('')
   const [chatMsg,  setChatMsg]  = useState('')
   const [tab,      setTab]      = useState<'map' | 'chat'>('map')
   const [loading,  setLoading]  = useState(true)
   const [myPos,    setMyPos]    = useState<{ lat: number; lng: number } | null>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
-  const geoRef     = useRef<ReturnType<typeof setInterval>>()
+  const chatEndRef  = useRef<HTMLDivElement>(null)
+  const geoRef      = useRef<ReturnType<typeof setInterval>>()
+  const channelRef  = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -45,21 +48,22 @@ export default function DriverRidePage() {
         router.replace('/driver')
         return
       }
-      setRide(data)
+      setRide(data as Ride)
 
       const { data: msgs } = await supabase
         .from('ride_messages').select('*, sender:profiles(*)')
         .eq('ride_id', rideId).order('created_at')
-      setMessages(msgs || [])
+      setMessages((msgs as RideMessage[]) || [])
       setLoading(false)
 
       // Запускаем GPS трекинг
       startTracking(user.id)
 
-      const channel = supabase.channel(`driver-ride-${rideId}`)
+      // Канал сохраняется в ref, чтобы cleanup мог его закрыть при размонтировании
+      channelRef.current = supabase.channel(`driver-ride-${rideId}`)
         .on('postgres_changes', {
           event: 'UPDATE', schema: 'public', table: 'rides', filter: `id=eq.${rideId}`
-        }, ({ new: u }) => setRide((prev: any) => ({ ...prev, ...u })))
+        }, ({ new: u }) => setRide(prev => prev ? { ...prev, ...u } as Ride : prev))
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'ride_messages', filter: `ride_id=eq.${rideId}`
         }, async ({ new: msg }) => {
@@ -67,18 +71,23 @@ export default function DriverRidePage() {
             .from('ride_messages').select('*, sender:profiles(*)')
             .eq('id', msg.id).single()
           if (m) {
-            setMessages(prev => prev.find(x => x.id === m.id) ? prev : [...prev, m])
+            setMessages(prev => prev.find(x => x.id === m.id) ? prev : [...prev, m as RideMessage])
             setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
           }
         })
         .subscribe()
-
-      return () => {
-        supabase.removeChannel(channel)
-        if (geoRef.current) clearInterval(geoRef.current)
-      }
     }
+
     load()
+
+    // Cleanup: закрываем канал и останавливаем GPS при размонтировании или смене rideId
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+      if (geoRef.current) clearInterval(geoRef.current)
+    }
   }, [rideId])
 
   function startTracking(driverId: string) {

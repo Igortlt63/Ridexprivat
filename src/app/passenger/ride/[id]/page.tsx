@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { useRouter, useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import {
@@ -8,6 +9,7 @@ import {
   XCircle, Clock, Shield, Phone, Map, Navigation
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import type { Ride, RideOffer, RideMessage } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import dynamic from 'next/dynamic'
@@ -59,16 +61,17 @@ export default function RideDetailPage() {
   const supabase = createClient()
   const apiKey   = process.env.NEXT_PUBLIC_YANDEX_MAPS_KEY || ''
 
-  const [ride,      setRide]      = useState<any>(null)
-  const [offers,    setOffers]    = useState<any[]>([])
-  const [messages,  setMessages]  = useState<any[]>([])
+  const [ride,      setRide]      = useState<Ride | null>(null)
+  const [offers,    setOffers]    = useState<RideOffer[]>([])
+  const [messages,  setMessages]  = useState<RideMessage[]>([])
   const [myId,      setMyId]      = useState('')
   const [chatMsg,   setChatMsg]   = useState('')
   const [loading,   setLoading]   = useState(true)
   const [tab,       setTab]       = useState<'offers'|'map'|'chat'>('offers')
   const [driverPos, setDriverPos] = useState<{lat:number;lng:number}|null>(null)
   const chatEndRef  = useRef<HTMLDivElement>(null)
-  const rideRef     = useRef<any>(null) // для использования в realtime callback
+  const rideRef     = useRef<Ride | null>(null) // для использования в realtime callback
+  const channelRef  = useRef<RealtimeChannel | null>(null)
 
   // Синхронизируем ref с состоянием чтобы realtime видел актуальный ride
   useEffect(() => { rideRef.current = ride }, [ride])
@@ -85,8 +88,8 @@ export default function RideDetailPage() {
         .eq('id', rideId).single()
 
       if (!rideData) { router.push('/passenger'); return }
-      setRide(rideData)
-      rideRef.current = rideData
+      setRide(rideData as Ride)
+      rideRef.current = rideData as Ride
 
       // Если поездка уже активна — сразу открываем карту
       if (['accepted', 'in_progress'].includes(rideData.status)) {
@@ -100,8 +103,8 @@ export default function RideDetailPage() {
         supabase.from('ride_messages').select('*, sender:profiles(*)')
           .eq('ride_id', rideId).order('created_at'),
       ])
-      setOffers(offersData || [])
-      setMessages(msgs || [])
+      setOffers((offersData as RideOffer[]) || [])
+      setMessages((msgs as RideMessage[]) || [])
 
       // Позиция водителя если уже едет
       if (rideData.driver_id) {
@@ -114,7 +117,8 @@ export default function RideDetailPage() {
       setLoading(false)
 
       // ── Realtime подписки ─────────────────────────────────────
-      const channel = supabase.channel(`ride-passenger-${rideId}`)
+      // Канал сохраняется в ref, чтобы cleanup мог его закрыть при размонтировании
+      channelRef.current = supabase.channel(`ride-passenger-${rideId}`)
 
         // Изменения статуса поездки
         .on('postgres_changes', {
@@ -127,9 +131,13 @@ export default function RideDetailPage() {
               .from('rides')
               .select('*, passenger:profiles!rides_passenger_id_fkey(*), driver:profiles!rides_driver_id_fkey(*)')
               .eq('id', rideId).single()
-            if (withDriver) { setRide(withDriver); rideRef.current = withDriver }
+            if (withDriver) {
+              const typed = withDriver as Ride
+              setRide(typed)
+              rideRef.current = typed
+            }
           } else {
-            setRide((prev: any) => ({ ...prev, ...u }))
+            setRide(prev => prev ? { ...prev, ...u } as Ride : prev)
           }
 
           if (u.status === 'accepted') {
@@ -158,9 +166,8 @@ export default function RideDetailPage() {
             .eq('id', offer.id).single()
           if (data) {
             setOffers(prev => {
-              // Не дублируем
               if (prev.find(o => o.id === data.id)) return prev
-              return [data, ...prev]
+              return [data as RideOffer, ...prev]
             })
             toast.success('💰 Новое предложение от водителя!')
             setTab('offers')
@@ -178,7 +185,7 @@ export default function RideDetailPage() {
           if (data) {
             setMessages(prev => {
               if (prev.find(m => m.id === data.id)) return prev
-              return [...prev, data]
+              return [...prev, data as RideMessage]
             })
             setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
           }
@@ -188,8 +195,9 @@ export default function RideDetailPage() {
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'driver_status',
           filter: rideData.driver_id ? `driver_id=eq.${rideData.driver_id}` : undefined,
-        }, ({ new: ds }: any) => {
-          if (ds?.lat) setDriverPos({ lat: ds.lat, lng: ds.lng })
+        }, ({ new: ds }) => {
+          const pos = ds as { lat?: number; lng?: number } | null
+          if (pos?.lat && pos?.lng) setDriverPos({ lat: pos.lat, lng: pos.lng })
         })
 
         .subscribe((status) => {
@@ -197,13 +205,20 @@ export default function RideDetailPage() {
             console.log('Realtime connected for ride:', rideId)
           }
         })
-
-      return () => { supabase.removeChannel(channel) }
     }
+
     load()
+
+    // Cleanup: закрываем канал при размонтировании или смене rideId
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
   }, [rideId])
 
-  async function acceptOffer(offer: any) {
+  async function acceptOffer(offer: RideOffer) {
     const { error } = await supabase.from('ride_offers').update({ status: 'accepted' }).eq('id', offer.id)
     if (error) { toast.error('Ошибка: ' + error.message); return }
     await supabase.from('ride_offers').update({ status: 'rejected' })
@@ -505,9 +520,9 @@ export default function RideDetailPage() {
                     {/* Автомобиль водителя */}
                     {veh && (
                       <div className="flex items-center gap-3 mb-3 bg-gray-50 rounded-xl p-3">
-                        {(veh as any).photo_url ? (
+                        {veh.photo_url ? (
                           <img
-                            src={(veh as any).photo_url}
+                            src={veh.photo_url}
                             className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
                             alt=""
                           />
@@ -518,13 +533,13 @@ export default function RideDetailPage() {
                         )}
                         <div>
                           <p className="font-semibold text-sm text-gray-900">
-                            {(veh as any).brand} {(veh as any).model} {(veh as any).year}
+                            {veh.brand} {veh.model} {veh.year}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {(veh as any).color} · {(veh as any).plate_number}
+                            {veh.color} · {veh.plate_number}
                           </p>
                           <p className="text-xs text-gray-400">
-                            {(veh as any).seats_count} мест
+                            {veh.seats_count} мест
                           </p>
                         </div>
                       </div>

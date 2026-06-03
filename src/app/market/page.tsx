@@ -38,11 +38,16 @@ export default function MarketPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [categories, setCategories]   = useState<MarketCategory[]>([])
-  const [listings, setListings]       = useState<MarketListing[]>([])
-  const [selected, setSelected]       = useState<number | null>(null)
-  const [search, setSearch]           = useState('')
-  const [loading, setLoading]         = useState(true)
+  const [categories,   setCategories]   = useState<MarketCategory[]>([])
+  const [listings,     setListings]     = useState<MarketListing[]>([])
+  const [selected,     setSelected]     = useState<number | null>(null)
+  const [search,       setSearch]       = useState('')
+  const [loading,      setLoading]      = useState(true)
+  const [loadingMore,  setLoadingMore]  = useState(false)
+  const [hasMore,      setHasMore]      = useState(false)
+  const [offset,       setOffset]       = useState(0)
+
+  const PAGE_SIZE = 30
 
   useEffect(() => {
     async function load() {
@@ -89,22 +94,39 @@ export default function MarketPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  async function loadListings(categoryId: number | null, q: string) {
-    setLoading(true)
+  async function loadListings(categoryId: number | null, q: string, startOffset = 0, append = false) {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
+
     let query = supabase
       .from('market_listings')
       .select('*, author:profiles(full_name, rating_passenger), category:market_categories(name, slug)')
       .eq('status', 'active')
       .order('is_promoted', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(30)
+      .range(startOffset, startOffset + PAGE_SIZE - 1)
 
     if (categoryId) query = query.eq('category_id', categoryId)
     if (q.trim())   query = query.ilike('title', `%${q.trim()}%`)
 
     const { data } = await query
-    setListings(data || [])
-    setLoading(false)
+    const items = (data as MarketListing[]) || []
+
+    if (append) {
+      setListings(prev => [...prev, ...items])
+    } else {
+      setListings(items)
+      setOffset(0)
+    }
+    setHasMore(items.length === PAGE_SIZE)
+    if (append) setLoadingMore(false)
+    else setLoading(false)
+  }
+
+  async function loadMore() {
+    const nextOffset = offset + PAGE_SIZE
+    setOffset(nextOffset)
+    await loadListings(selected, search, nextOffset, true)
   }
 
   function selectCategory(id: number | null) {
@@ -209,6 +231,17 @@ export default function MarketPage() {
             {listings.map(listing => (
               <ListingCard key={listing.id} listing={listing} />
             ))}
+
+            {/* Пагинация — кнопка «Загрузить ещё» */}
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full py-3 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                {loadingMore ? 'Загрузка...' : 'Загрузить ещё объявления'}
+              </button>
+            )}
           </div>
         )}
       </main>

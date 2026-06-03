@@ -1,41 +1,82 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Star, CheckCircle, XCircle, Car, TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { Ride } from '@/types'
+import type { Ride, Profile } from '@/types'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
+
+// Тип для поездки с частичными данными пассажира (из join-запроса)
+type RideWithPassenger = Ride & {
+  passenger?: Pick<Profile, 'full_name' | 'rating_passenger'> | null
+}
+
+const PAGE_SIZE = 20
 
 export default function DriverHistoryPage() {
   const router   = useRouter()
   const supabase = createClient()
-  const [rides,   setRides]   = useState<Ride[]>([])
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats]     = useState({ total: 0, completed: 0, earned: 0 })
+  const [rides,       setRides]       = useState<RideWithPassenger[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore,     setHasMore]     = useState(false)
+  const [page,        setPage]        = useState(0)
+  const [stats,       setStats]       = useState({ total: 0, completed: 0, earned: 0 })
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
 
+      // Статистика грузится отдельным лёгким запросом (без лимита)
+      const { data: statsData } = await supabase
+        .from('rides')
+        .select('status, final_price, passenger_price')
+        .eq('driver_id', user.id)
+
+      if (statsData) {
+        const completed = statsData.filter(r => r.status === 'completed')
+        const earned    = completed.reduce((s, r) => s + (r.final_price || r.passenger_price || 0), 0)
+        setStats({ total: statsData.length, completed: completed.length, earned })
+      }
+
+      // Первая страница поездок
       const { data } = await supabase
         .from('rides')
         .select('*, passenger:profiles!rides_passenger_id_fkey(full_name, rating_passenger)')
         .eq('driver_id', user.id)
         .order('created_at', { ascending: false })
+        .range(0, PAGE_SIZE - 1)
 
-      const rides = data || []
-      setRides(rides)
-
-      const completed = rides.filter(r => r.status === 'completed')
-      const earned    = completed.reduce((s, r) => s + (r.final_price || r.passenger_price || 0), 0)
-      setStats({ total: rides.length, completed: completed.length, earned })
+      const ridesPage = (data as RideWithPassenger[]) || []
+      setRides(ridesPage)
+      setHasMore(ridesPage.length === PAGE_SIZE)
       setLoading(false)
     }
     load()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadMore() {
+    setLoadingMore(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setLoadingMore(false); return }
+
+    const nextPage = page + 1
+    const { data } = await supabase
+      .from('rides')
+      .select('*, passenger:profiles!rides_passenger_id_fkey(full_name, rating_passenger)')
+      .eq('driver_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(nextPage * PAGE_SIZE, (nextPage + 1) * PAGE_SIZE - 1)
+
+    const ridesPage = (data as RideWithPassenger[]) || []
+    setRides(prev => [...prev, ...ridesPage])
+    setHasMore(ridesPage.length === PAGE_SIZE)
+    setPage(nextPage)
+    setLoadingMore(false)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -76,7 +117,7 @@ export default function DriverHistoryPage() {
         ) : (
           <div className="space-y-3">
             {rides.map(ride => (
-              <div key={ride.id} className="card p-4">
+              <div key={ride.id} className="card p-4" >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
                     {ride.status === 'completed'
@@ -107,13 +148,13 @@ export default function DriverHistoryPage() {
                   <span className="font-bold text-gray-900">
                     {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
                   </span>
-                  {(ride as any).passenger && (
+                  {ride.passenger && (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-500">{(ride as any).passenger.full_name}</span>
+                      <span className="text-xs text-gray-500">{ride.passenger.full_name}</span>
                       <div className="flex items-center gap-0.5">
                         <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                         <span className="text-xs text-gray-500">
-                          {Number((ride as any).passenger.rating_passenger).toFixed(1)}
+                          {Number(ride.passenger.rating_passenger).toFixed(1)}
                         </span>
                       </div>
                     </div>
@@ -121,6 +162,17 @@ export default function DriverHistoryPage() {
                 </div>
               </div>
             ))}
+
+            {/* Пагинация — кнопка «Загрузить ещё» */}
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full py-3 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                {loadingMore ? 'Загрузка...' : 'Загрузить ещё'}
+              </button>
+            )}
           </div>
         )}
       </div>

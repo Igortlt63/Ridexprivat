@@ -1,15 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, MapPin, Star, Clock, CheckCircle, XCircle, Car } from 'lucide-react'
+import { ChevronLeft, Star, Clock, CheckCircle, XCircle, Car } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { Ride } from '@/types'
+import type { Ride, Profile } from '@/types'
+import type { LucideIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
-const STATUS_LABELS: Record<string, { label: string; icon: any; color: string }> = {
+// Тип для поездки с частичными данными водителя (из join-запроса)
+type RideWithDriver = Ride & {
+  driver?: Pick<Profile, 'full_name' | 'rating_driver'> | null
+}
+
+type FilterKey = 'all' | 'completed' | 'cancelled'
+
+const STATUS_LABELS: Record<string, { label: string; icon: LucideIcon; color: string }> = {
   completed:   { label: 'Завершена',     icon: CheckCircle, color: 'text-green-600' },
   cancelled:   { label: 'Отменена',      icon: XCircle,     color: 'text-rose-500' },
   in_progress: { label: 'В пути',        icon: Car,         color: 'text-indigo-600' },
@@ -18,34 +26,65 @@ const STATUS_LABELS: Record<string, { label: string; icon: any; color: string }>
   negotiating: { label: 'Торг',          icon: Clock,       color: 'text-amber-600' },
 }
 
+const PAGE_SIZE = 20
+
 export default function HistoryPage() {
   const router   = useRouter()
   const supabase = createClient()
 
-  const [rides,   setRides]   = useState<Ride[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filter,  setFilter]  = useState<'all' | 'completed' | 'cancelled'>('all')
+  const [rides,    setRides]    = useState<RideWithDriver[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore,  setHasMore]  = useState(false)
+  const [page,     setPage]     = useState(0)
+  const [filter,   setFilter]   = useState<FilterKey>('all')
+
+  const fetchRides = useCallback(async (pageIndex: number, currentFilter: FilterKey) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/auth'); return }
+
+    let query = supabase
+      .from('rides')
+      .select('*, driver:profiles!rides_driver_id_fkey(full_name, rating_driver)')
+      .eq('passenger_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(pageIndex * PAGE_SIZE, (pageIndex + 1) * PAGE_SIZE - 1)
+
+    if (currentFilter !== 'all') {
+      query = query.eq('status', currentFilter)
+    }
+
+    const { data } = await query
+    return (data as RideWithDriver[]) || []
+  }, [supabase, router])
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth'); return }
-
-      const { data } = await supabase
-        .from('rides')
-        .select('*, driver:profiles!rides_driver_id_fkey(full_name, rating_driver)')
-        .eq('passenger_id', user.id)
-        .order('created_at', { ascending: false })
-      setRides(data || [])
+      setLoading(true)
+      const data = await fetchRides(0, filter)
+      if (data) {
+        setRides(data)
+        setHasMore(data.length === PAGE_SIZE)
+      }
+      setPage(0)
       setLoading(false)
     }
     load()
-  }, [])
+  }, [filter]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = rides.filter(r => {
-    if (filter === 'all') return true
-    return r.status === filter
-  })
+  async function loadMore() {
+    setLoadingMore(true)
+    const nextPage = page + 1
+    const data = await fetchRides(nextPage, filter)
+    if (data) {
+      setRides(prev => [...prev, ...data])
+      setHasMore(data.length === PAGE_SIZE)
+      setPage(nextPage)
+    }
+    setLoadingMore(false)
+  }
+
+  const filtered = rides // фильтрация теперь на сервере
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,12 +100,12 @@ export default function HistoryPage() {
       <div className="max-w-lg mx-auto px-4 py-4">
         {/* Фильтры */}
         <div className="flex gap-2 mb-4">
-          {[
-            { key: 'all',       label: 'Все' },
-            { key: 'completed', label: 'Завершённые' },
-            { key: 'cancelled', label: 'Отменённые' },
-          ].map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key as any)}
+          {([
+            { key: 'all'       as FilterKey, label: 'Все' },
+            { key: 'completed' as FilterKey, label: 'Завершённые' },
+            { key: 'cancelled' as FilterKey, label: 'Отменённые' },
+          ]).map(f => (
+            <button key={f.key} onClick={() => setFilter(f.key)}
               className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${
                 filter === f.key ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
               }`}
@@ -120,14 +159,14 @@ export default function HistoryPage() {
                     <span className="font-bold text-gray-900">
                       {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
                     </span>
-                    {(ride as any).driver && (
+                    {ride.driver && (
                       <div className="flex items-center gap-1.5">
                         <Car className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-xs text-gray-500">{(ride as any).driver.full_name}</span>
+                        <span className="text-xs text-gray-500">{ride.driver.full_name}</span>
                         <div className="flex items-center gap-0.5">
                           <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                           <span className="text-xs text-gray-500">
-                            {Number((ride as any).driver.rating_driver).toFixed(1)}
+                            {Number(ride.driver.rating_driver).toFixed(1)}
                           </span>
                         </div>
                       </div>
@@ -136,6 +175,17 @@ export default function HistoryPage() {
                 </Link>
               )
             })}
+
+            {/* Пагинация — кнопка «Загрузить ещё» */}
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full py-3 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                {loadingMore ? 'Загрузка...' : 'Загрузить ещё'}
+              </button>
+            )}
           </div>
         )}
       </div>

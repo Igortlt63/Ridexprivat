@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
@@ -12,6 +12,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import LiveIndicator from '@/components/ui/LiveIndicator'
 import type { Ride, Profile, DriverVehicle } from '@/types'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import dynamic from 'next/dynamic'
@@ -78,7 +79,7 @@ function OfferModal({ ride, myId, vehicleId, onClose }: {
 }
 
 // ── Карточка заявки ────────────────────────────────────────────
-function RideCard({ ride, onOffer }: { ride: any; onOffer: (r: Ride) => void }) {
+function RideCard({ ride, onOffer }: { ride: Ride; onOffer: (r: Ride) => void }) {
   return (
     <div className="card p-4 animate-fade-in">
       <div className="flex items-center gap-3 mb-3">
@@ -218,14 +219,15 @@ export default function DriverPage() {
   const [myId,         setMyId]         = useState('')
   const [isOnline,     setIsOnline]     = useState(false)
   const [rides,        setRides]        = useState<Ride[]>([])
-  const [activeRide,   setActiveRide]   = useState<any>(null) // принятая/активная поездка
+  const [activeRide,   setActiveRide]   = useState<Ride | null>(null) // принятая/активная поездка
   const [selectedRide, setSelectedRide] = useState<Ride | null>(null)
   const [loading,      setLoading]      = useState(true)
   const [vehicles,     setVehicles]     = useState<DriverVehicle[]>([])
   const [view,         setView]         = useState<'list' | 'map'>('list')
   const [myPos,        setMyPos]        = useState<{ lat: number; lng: number } | null>(null)
   const [geoError,     setGeoError]     = useState('')
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef  = useRef<NodeJS.Timeout>()
+  const channelRef   = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -259,7 +261,8 @@ export default function DriverPage() {
       setLoading(false)
 
       // Realtime — новые заявки
-      const channel = supabase.channel('driver-rides')
+      // Сохраняем канал в ref, чтобы cleanup в useEffect мог его закрыть
+      channelRef.current = supabase.channel('driver-rides')
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'rides',
         }, async ({ new: ride }) => {
@@ -268,7 +271,7 @@ export default function DriverPage() {
             .from('rides').select('*, passenger:profiles!rides_passenger_id_fkey(*)')
             .eq('id', ride.id).single()
           if (data) {
-            setRides(prev => [data, ...prev])
+            setRides(prev => [data as Ride, ...prev])
             toast('📍 Новая заявка!', { icon: '🚗' })
           }
         })
@@ -287,7 +290,7 @@ export default function DriverPage() {
               .select('*, passenger:profiles!rides_passenger_id_fkey(*)')
               .eq('id', u.id).single()
             if (full) {
-              setActiveRide(full)
+              setActiveRide(full as Ride)
               if (u.status === 'accepted') {
                 toast.success('✅ Пассажир принял ваше предложение!')
                 // Автопереход на экран поездки
@@ -297,17 +300,22 @@ export default function DriverPage() {
           }
           // Сбрасываем если поездка завершена/отменена
           if (['completed', 'cancelled'].includes(u.status)) {
-            setActiveRide((prev: any) => prev?.id === u.id ? null : prev)
+            setActiveRide(prev => prev?.id === u.id ? null : prev)
           }
         })
         .subscribe()
-
-      return () => {
-        supabase.removeChannel(channel)
-        if (intervalRef.current) clearInterval(intervalRef.current)
-      }
     }
+
     load()
+
+    // Cleanup: закрываем канал и останавливаем геолокацию при размонтировании
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
   }, [])
 
   async function toggleOnline() {
@@ -505,7 +513,7 @@ export default function DriverPage() {
           ) : (
             <div className="space-y-3">
               {rides.map(ride => (
-                <RideCard key={ride.id} ride={ride as any} onOffer={setSelectedRide} />
+                <RideCard key={ride.id} ride={ride} onOffer={setSelectedRide} />
               ))}
             </div>
           )

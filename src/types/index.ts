@@ -33,6 +33,7 @@ export interface DriverVehicle {
   color: string
   plate_number: string
   seats_count: number
+  photo_url?: string | null
   is_verified: boolean
   is_active: boolean
 }
