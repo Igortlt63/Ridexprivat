@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { z } from 'zod'
 import { ChevronLeft, Camera, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -20,6 +21,23 @@ const DEFAULT_CATEGORIES = [
   { id: 10, slug: 'car_wash',     name: 'Автомойки',        icon: '💦' },
   { id: 11, slug: 'car_service',  name: 'Автосервисы',      icon: '🔩' },
 ]
+
+// ── Zod-схема формы объявления ────────────────────────────────
+const listingSchema = z.object({
+  categoryId:   z.number({ required_error: 'Выберите категорию' }),
+  title:        z.string().min(5, 'Минимум 5 символов').max(200, 'Максимум 200 символов'),
+  city:         z.string().min(2, 'Укажите город').max(100),
+  contactPhone: z.string().min(10, 'Введите корректный телефон').max(20),
+  contactName:  z.string().min(2, 'Введите имя').max(100),
+  price:        z.string().optional(),
+  priceType:    z.string(),
+}).superRefine((data, ctx) => {
+  if (data.priceType !== 'free' && data.priceType !== 'negotiable') {
+    if (!data.price || isNaN(Number(data.price)) || Number(data.price) < 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['price'], message: 'Укажите корректную цену' })
+    }
+  }
+})
 
 const PRICE_TYPE_OPTIONS = [
   { value: 'fixed',      label: 'Фиксированная' },
@@ -77,20 +95,33 @@ export default function NewListingPage() {
     setPreviews(newFiles.map(f => URL.createObjectURL(f)))
   }
 
-  function validate() {
-    const e: Record<string, string> = {}
-    if (!categoryId)                     e.category = 'Выберите категорию'
-    if (title.trim().length < 5)         e.title    = 'Минимум 5 символов'
-    if (city.trim().length < 2)          e.city     = 'Укажите город'
-    if (contactPhone.trim().length < 10) e.phone    = 'Введите телефон'
-    if (contactName.trim().length < 2)   e.name     = 'Введите имя'
-    if (priceType !== 'free' && priceType !== 'negotiable' && !price) e.price = 'Укажите цену'
-    setErrors(e)
-    return Object.keys(e).length === 0
+  function validate(): boolean {
+    if (!categoryId) {
+      toast.error('Выберите категорию')
+      setErrors({ category: 'Выберите категорию' })
+      return false
+    }
+    const result = listingSchema.safeParse({
+      categoryId, title: title.trim(), city: city.trim(),
+      contactPhone: contactPhone.trim(), contactName: contactName.trim(),
+      price, priceType,
+    })
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      result.error.errors.forEach(e => {
+        const field = e.path[0] as string
+        if (field) fieldErrors[field] = e.message
+      })
+      setErrors(fieldErrors)
+      toast.error(result.error.errors[0]?.message || 'Заполните обязательные поля')
+      return false
+    }
+    setErrors({})
+    return true
   }
 
   async function onSubmit() {
-    if (!validate()) { toast.error('Заполните обязательные поля'); return }
+    if (!validate()) return
 
     setSubmitting(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -170,7 +201,7 @@ export default function NewListingPage() {
                     : 'border-gray-100 hover:border-indigo-200 hover:bg-gray-50'
                 }`}
               >
-                <span className="text-xl">{(cat as any).icon || '📦'}</span>
+                <span className="text-xl">{(cat as { icon?: string }).icon || '📦'}</span>
                 <span className="text-xs font-medium text-gray-700 leading-tight">{cat.name}</span>
               </button>
             ))}

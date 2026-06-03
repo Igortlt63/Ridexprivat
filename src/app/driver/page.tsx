@@ -1,213 +1,21 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import {
-  MapPin, Star, Users, Luggage, PawPrint, CigaretteOff,
-  MessageSquare, ToggleLeft, ToggleRight, Clock,
-  Banknote, Car, Map, List, ChevronLeft, Navigation
+  Star, ToggleLeft, ToggleRight, Clock,
+  Car, Map, List, ChevronLeft, Navigation
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import LiveIndicator from '@/components/ui/LiveIndicator'
-import type { Ride, Profile, DriverVehicle } from '@/types'
+import type { Ride, DriverVehicle } from '@/types'
 import type { RealtimeChannel } from '@supabase/supabase-js'
-import { formatDistanceToNow } from 'date-fns'
-import { ru } from 'date-fns/locale'
-import dynamic from 'next/dynamic'
-
-const YandexMap = dynamic(() => import('@/components/map/YandexMap'), { ssr: false })
-
-// ── Модалка торга ──────────────────────────────────────────────
-function OfferModal({ ride, myId, vehicleId, onClose }: {
-  ride: Ride; myId: string; vehicleId?: string; onClose: () => void
-}) {
-  const supabase = createClient()
-  const [price,   setPrice]   = useState(ride.passenger_price)
-  const [message, setMessage] = useState('')
-  const [sending, setSending] = useState(false)
-
-  async function send() {
-    setSending(true)
-    const { error } = await supabase.from('ride_offers').insert({
-      ride_id:       ride.id,
-      driver_id:     myId,
-      vehicle_id:    vehicleId || null,
-      offered_price: price,
-      message:       message.trim() || null,
-      status:        'pending',
-    })
-    if (!error) {
-      await supabase.from('rides').update({ status: 'negotiating' }).eq('id', ride.id)
-      toast.success('Предложение отправлено!')
-    } else {
-      toast.error('Ошибка: ' + error.message)
-    }
-    setSending(false)
-    onClose()
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl">
-        <h3 className="font-bold text-lg text-gray-900 mb-4">Предложить цену</h3>
-        <div className="mb-3 p-3 bg-gray-50 rounded-xl">
-          <p className="text-xs text-gray-400 mb-0.5">Цена пассажира</p>
-          <p className="font-bold text-gray-900">{ride.passenger_price.toLocaleString('ru-RU')} ₽</p>
-        </div>
-        <div className="mb-3">
-          <label className="label">Ваша цена (₽)</label>
-          <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))}
-            className="input text-lg font-semibold" min={1} />
-        </div>
-        <div className="mb-5">
-          <label className="label">Сообщение пассажиру</label>
-          <textarea value={message} onChange={e => setMessage(e.target.value)}
-            placeholder="Расскажите о себе или авто..." className="input resize-none" rows={2} />
-        </div>
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 btn-secondary">Отмена</button>
-          <button onClick={send} disabled={sending} className="flex-1 btn-primary">
-            {sending ? '...' : 'Отправить'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Карточка заявки ────────────────────────────────────────────
-function RideCard({ ride, onOffer }: { ride: Ride; onOffer: (r: Ride) => void }) {
-  return (
-    <div className="card p-4 animate-fade-in">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
-          {ride.passenger?.avatar_url
-            ? <img src={ride.passenger.avatar_url} className="w-9 h-9 object-cover" alt="" />
-            : <span className="text-sm font-bold text-indigo-700">{ride.passenger?.full_name?.[0] || '?'}</span>
-          }
-        </div>
-        <div className="flex-1">
-          <p className="font-medium text-sm text-gray-900">{ride.passenger?.full_name || 'Пассажир'}</p>
-          <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-            <span className="text-xs text-gray-500">{Number(ride.passenger?.rating_passenger || 5).toFixed(1)}</span>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="font-bold text-lg text-gray-900">{ride.passenger_price.toLocaleString('ru-RU')} ₽</p>
-          <p className="text-xs text-gray-400">
-            {formatDistanceToNow(new Date(ride.created_at), { addSuffix: true, locale: ru })}
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-gray-50 rounded-xl p-3 mb-3 space-y-1.5">
-        <div className="flex items-center gap-2 text-xs text-gray-600">
-          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
-          <span className="truncate">{ride.origin_address}</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-600">
-          <div className="w-2 h-2 bg-rose-500 rounded-full flex-shrink-0" />
-          <span className="truncate">{ride.dest_address}</span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {ride.seats_needed > 1 && (
-          <span className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-            <Users className="w-3 h-3" /> {ride.seats_needed} места
-          </span>
-        )}
-        {ride.allow_luggage && (
-          <span className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-            <Luggage className="w-3 h-3" /> Багаж
-          </span>
-        )}
-        {ride.allow_pets && (
-          <span className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-            <PawPrint className="w-3 h-3" /> Животное
-          </span>
-        )}
-        {ride.no_smoking && (
-          <span className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-            <CigaretteOff className="w-3 h-3" /> Не курить
-          </span>
-        )}
-        {ride.ride_type === 'intercity' && (
-          <span className="badge-primary text-xs">Межгород</span>
-        )}
-      </div>
-
-      {ride.comment && (
-        <div className="flex gap-2 mb-3 text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-          <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-          <p className="line-clamp-2">{ride.comment}</p>
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        <button onClick={() => onOffer(ride)} className="flex-1 btn-primary btn-sm">
-          Принять — {ride.passenger_price.toLocaleString('ru-RU')} ₽
-        </button>
-        <button onClick={() => onOffer(ride)} className="btn-secondary btn-sm px-3" title="Предложить другую цену">
-          <Banknote className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ── Карта с заказами ───────────────────────────────────────────
-function MapWithRides({
-  rides, myPos, apiKey, onRideClick
-}: {
-  rides: Ride[]
-  myPos: { lat: number; lng: number }
-  apiKey: string
-  onRideClick: (r: Ride) => void
-}) {
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!window.ymaps || !containerRef.current) return
-    const ymaps = window.ymaps
-    const map = new ymaps.Map(containerRef.current, {
-      center: [myPos.lat, myPos.lng], zoom: 12,
-      controls: ['zoomControl', 'geolocationControl'],
-    })
-
-    // Маркер водителя
-    map.geoObjects.add(new ymaps.Placemark(
-      [myPos.lat, myPos.lng],
-      { balloonContent: 'Вы' },
-      { preset: 'islands#blueCarIcon' }
-    ))
-
-    // Маркеры заказов
-    rides.forEach(ride => {
-      const mark = new ymaps.Placemark(
-        [ride.origin_lat, ride.origin_lng],
-        {
-          balloonContent: `<b>${ride.origin_address}</b><br/>→ ${ride.dest_address}<br/><b style="color:#4F46E5">${ride.passenger_price.toLocaleString('ru-RU')} ₽</b>`,
-          hintContent: `${ride.passenger_price.toLocaleString('ru-RU')} ₽`,
-        },
-        {
-          preset: 'islands#redCircleDotIconWithCaption',
-          iconCaption: `${ride.passenger_price.toLocaleString('ru-RU')}₽`,
-        }
-      )
-      mark.events.add('click', () => onRideClick(ride))
-      map.geoObjects.add(mark)
-    })
-
-    return () => { try { map.destroy() } catch {} }
-  }, [rides, myPos, apiKey])
-
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-}
+import { useAppStore } from '@/store/useAppStore'
+import OfferModal   from '@/components/driver/OfferModal'
+import RideCard     from '@/components/driver/RideCard'
+import MapWithRides from '@/components/driver/MapWithRides'
 
 // ── Главный компонент ──────────────────────────────────────────
 export default function DriverPage() {
@@ -215,11 +23,12 @@ export default function DriverPage() {
   const supabase = createClient()
   const apiKey   = process.env.NEXT_PUBLIC_YANDEX_MAPS_KEY || ''
 
-  const [profile,      setProfile]      = useState<Profile | null>(null)
-  const [myId,         setMyId]         = useState('')
+  // Профиль и userId из Zustand (кешируется, не дублирует запросы)
+  const { profile, userId: myId, loadProfile } = useAppStore()
+
   const [isOnline,     setIsOnline]     = useState(false)
   const [rides,        setRides]        = useState<Ride[]>([])
-  const [activeRide,   setActiveRide]   = useState<Ride | null>(null) // принятая/активная поездка
+  const [activeRide,   setActiveRide]   = useState<Ride | null>(null)
   const [selectedRide, setSelectedRide] = useState<Ride | null>(null)
   const [loading,      setLoading]      = useState(true)
   const [vehicles,     setVehicles]     = useState<DriverVehicle[]>([])
@@ -231,13 +40,12 @@ export default function DriverPage() {
 
   useEffect(() => {
     async function load() {
+      await loadProfile()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
-      setMyId(user.id)
 
-      const [{ data: prof }, { data: vehs }, { data: statusData }, { data: ridesData }, { data: activeData }] =
+      const [{ data: vehs }, { data: statusData }, { data: ridesData }, { data: activeData }] =
         await Promise.all([
-          supabase.from('profiles').select('*').eq('id', user.id).single(),
           supabase.from('driver_vehicles').select('*').eq('driver_id', user.id).eq('is_active', true),
           supabase.from('driver_status').select('is_online').eq('driver_id', user.id).single(),
           supabase.from('rides')
@@ -245,7 +53,6 @@ export default function DriverPage() {
             .eq('status', 'searching')
             .order('created_at', { ascending: false })
             .limit(20),
-          // Ищем текущую активную поездку водителя
           supabase.from('rides')
             .select('*, passenger:profiles!rides_passenger_id_fkey(*)')
             .eq('driver_id', user.id)
@@ -253,7 +60,6 @@ export default function DriverPage() {
             .single(),
         ])
 
-      setProfile(prof)
       setVehicles(vehs || [])
       setIsOnline(statusData?.is_online || false)
       setRides(ridesData || [])

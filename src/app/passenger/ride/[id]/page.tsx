@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Ride, RideOffer, RideMessage } from '@/types'
+import ReviewBlock from '@/components/shared/ReviewBlock'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import dynamic from 'next/dynamic'
@@ -25,34 +26,6 @@ const STATUS_INFO: Record<string, { label: string; color: string; bg: string }> 
   cancelled:   { label: 'Отменена',             color: 'text-rose-700',   bg: 'bg-rose-50' },
 }
 
-// ── Блок отзыва ────────────────────────────────────────────────
-function ReviewBlock({ onSubmit }: { onSubmit: (r: number, c: string) => void }) {
-  const [rating,  setRating]  = useState(5)
-  const [comment, setComment] = useState('')
-  const [sent,    setSent]    = useState(false)
-  if (sent) return (
-    <div className="card p-4 text-center bg-green-50">
-      <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-1" />
-      <p className="text-sm font-medium text-green-700">Отзыв отправлен!</p>
-    </div>
-  )
-  return (
-    <div className="card p-4 space-y-3">
-      <p className="font-semibold text-gray-900">Оцените водителя</p>
-      <div className="flex gap-1">
-        {[1,2,3,4,5].map(i => (
-          <button key={i} type="button" onClick={() => setRating(i)}>
-            <Star className={`w-7 h-7 ${i <= rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
-          </button>
-        ))}
-      </div>
-      <textarea value={comment} onChange={e => setComment(e.target.value)}
-        placeholder="Комментарий..." className="input resize-none" rows={2} />
-      <button onClick={() => { onSubmit(rating, comment); setSent(true) }}
-        className="btn-primary w-full">Отправить отзыв</button>
-    </div>
-  )
-}
 
 export default function RideDetailPage() {
   const router   = useRouter()
@@ -238,18 +211,31 @@ export default function RideDetailPage() {
   }
 
   async function cancelRide() {
-    if (!confirm('Отменить заявку?')) return
-    await supabase.from('rides').update({ status: 'cancelled' }).eq('id', rideId)
+    const isActive = ride && ['accepted', 'in_progress'].includes(ride.status)
+    const msg = isActive
+      ? 'Водитель уже едет. Вы уверены, что хотите отменить поездку?'
+      : 'Отменить заявку?'
+    if (!confirm(msg)) return
+    const { error } = await supabase.from('rides')
+      .update({ status: 'cancelled' })
+      .eq('id', rideId)
+    if (error) { toast.error('Ошибка отмены'); return }
+    toast('Поездка отменена')
     router.replace('/passenger')
   }
 
   async function leaveReview(rating: number, comment: string) {
     if (!ride?.driver_id) return
-    await supabase.from('reviews').insert({
-      ride_id: rideId, reviewer_id: myId, reviewed_id: ride.driver_id,
-      role_reviewed: 'driver', rating, comment,
+    const { error } = await supabase.from('reviews').insert({
+      ride_id:      rideId,
+      reviewer_id:  myId,
+      reviewed_id:  ride.driver_id,
+      role_reviewed: 'driver',
+      rating,
+      comment: comment.trim() || null,
     })
-    toast.success('Отзыв оставлен!')
+    if (error) toast.error('Не удалось отправить отзыв')
+    else toast.success('Отзыв оставлен!')
   }
 
   async function sendMessage() {
@@ -294,12 +280,20 @@ export default function RideDetailPage() {
                 </p>
               </div>
             </div>
-            {driver?.phone && (
-              <a href={`tel:${driver.phone}`}
-                className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-xl text-sm font-medium">
-                <Phone className="w-4 h-4" /> Позвонить
-              </a>
-            )}
+            <div className="flex items-center gap-2">
+              {driver?.phone && (
+                <a href={`tel:${driver.phone}`}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-xl text-sm font-medium">
+                  <Phone className="w-4 h-4" /> Позвонить
+                </a>
+              )}
+              <button
+                onClick={cancelRide}
+                className="px-3 py-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-xl text-sm font-medium transition-colors"
+              >
+                Отменить
+              </button>
+            </div>
           </div>
         </header>
 
@@ -568,7 +562,7 @@ export default function RideDetailPage() {
 
         {/* Отзыв после завершения */}
         {ride.status === 'completed' && ride.driver_id && (
-          <ReviewBlock onSubmit={leaveReview} />
+          <ReviewBlock targetLabel="водителя" onSubmit={leaveReview} />
         )}
 
         {/* Отмена */}

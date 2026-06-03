@@ -10,6 +10,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import type { Ride, RideMessage } from '@/types'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import ReviewBlock from '@/components/shared/ReviewBlock'
 import dynamic from 'next/dynamic'
 
 const YandexMap = dynamic(() => import('@/components/map/YandexMap'), { ssr: false })
@@ -21,13 +22,14 @@ export default function DriverRidePage() {
   const supabase = createClient()
   const apiKey   = process.env.NEXT_PUBLIC_YANDEX_MAPS_KEY || ''
 
-  const [ride,     setRide]     = useState<Ride | null>(null)
-  const [messages, setMessages] = useState<RideMessage[]>([])
-  const [myId,     setMyId]     = useState('')
-  const [chatMsg,  setChatMsg]  = useState('')
-  const [tab,      setTab]      = useState<'map' | 'chat'>('map')
-  const [loading,  setLoading]  = useState(true)
-  const [myPos,    setMyPos]    = useState<{ lat: number; lng: number } | null>(null)
+  const [ride,        setRide]        = useState<Ride | null>(null)
+  const [messages,    setMessages]    = useState<RideMessage[]>([])
+  const [myId,        setMyId]        = useState('')
+  const [chatMsg,     setChatMsg]     = useState('')
+  const [tab,         setTab]         = useState<'map' | 'chat'>('map')
+  const [loading,     setLoading]     = useState(true)
+  const [myPos,       setMyPos]       = useState<{ lat: number; lng: number } | null>(null)
+  const [cancelling,  setCancelling]  = useState(false)
   const chatEndRef  = useRef<HTMLDivElement>(null)
   const geoRef      = useRef<ReturnType<typeof setInterval>>()
   const channelRef  = useRef<RealtimeChannel | null>(null)
@@ -106,6 +108,39 @@ export default function DriverRidePage() {
     )
     update()
     geoRef.current = setInterval(update, 10000) // каждые 10 сек
+  }
+
+  async function cancelRide() {
+    const msg = ride?.status === 'in_progress'
+      ? 'Поездка уже идёт. Отменить? Пассажир будет уведомлён.'
+      : 'Отменить принятую поездку? Пассажир будет уведомлён.'
+    if (!confirm(msg)) return
+    setCancelling(true)
+    const { error } = await supabase.from('rides')
+      .update({ status: 'cancelled' })
+      .eq('id', rideId)
+    if (error) {
+      toast.error('Ошибка отмены: ' + error.message)
+      setCancelling(false)
+      return
+    }
+    if (geoRef.current) clearInterval(geoRef.current)
+    toast('Поездка отменена')
+    router.replace('/driver')
+  }
+
+  async function leaveReview(rating: number, comment: string) {
+    if (!ride?.passenger_id) return
+    const { error } = await supabase.from('reviews').insert({
+      ride_id:      rideId,
+      reviewer_id:  myId,
+      reviewed_id:  ride.passenger_id,
+      role_reviewed: 'passenger',
+      rating,
+      comment: comment.trim() || null,
+    })
+    if (error) toast.error('Не удалось отправить отзыв')
+    else toast.success('Отзыв отправлен!')
   }
 
   async function startRide() {
@@ -302,7 +337,7 @@ export default function DriverRidePage() {
 
       {/* Кнопки действий */}
       {!isDone && (
-        <div className="bg-gray-900 px-4 py-3 flex-shrink-0">
+        <div className="bg-gray-900 px-4 py-3 flex-shrink-0 space-y-2">
           <div className="max-w-lg mx-auto">
             {isAccepted && (
               <button onClick={startRide}
@@ -318,21 +353,39 @@ export default function DriverRidePage() {
                 Завершить поездку
               </button>
             )}
+            {/* Отмена доступна пока поездка не началась или идёт */}
+            <button
+              onClick={cancelRide}
+              disabled={cancelling}
+              className="w-full py-2.5 mt-1 rounded-xl text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              {cancelling ? 'Отменяем...' : '✕ Отменить поездку'}
+            </button>
           </div>
         </div>
       )}
 
       {isDone && (
-        <div className="bg-gray-900 px-4 py-4 flex-shrink-0 text-center">
-          <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-1" />
-          <p className="text-white font-bold">Поездка завершена</p>
-          <p className="text-gray-400 text-sm">
-            {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
-          </p>
-          <button onClick={() => router.replace('/driver')}
-            className="mt-3 text-indigo-400 text-sm hover:underline">
-            Вернуться к заказам →
-          </button>
+        <div className="bg-gray-900 px-4 py-4 flex-shrink-0">
+          <div className="max-w-lg mx-auto text-center mb-4">
+            <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-1" />
+            <p className="text-white font-bold">Поездка завершена</p>
+            <p className="text-gray-400 text-sm">
+              {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
+            </p>
+          </div>
+          {/* Оценить пассажира */}
+          {ride.passenger_id && (
+            <div className="max-w-lg mx-auto mb-3">
+              <ReviewBlock targetLabel="пассажира" onSubmit={leaveReview} />
+            </div>
+          )}
+          <div className="max-w-lg mx-auto">
+            <button onClick={() => router.replace('/driver')}
+              className="w-full py-3 rounded-xl text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+              Вернуться к заказам →
+            </button>
+          </div>
         </div>
       )}
     </div>

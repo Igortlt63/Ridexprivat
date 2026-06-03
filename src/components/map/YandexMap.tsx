@@ -6,6 +6,12 @@ declare global {
   interface Window { ymaps: any; _ymapsLoaded?: boolean }
 }
 
+export interface RouteAlternative {
+  index:    number
+  duration: string   // '12 мин'
+  distance: string   // '4.2 км'
+}
+
 interface Props {
   mode:          'pick' | 'route' | 'track' | 'navigate'
   apiKey:        string
@@ -15,7 +21,6 @@ interface Props {
   destLat?:      number; destLng?:    number
   driverLat?:    number; driverLng?:  number
   passengerLat?: number; passengerLng?: number
-  // navigate — маршрут с живым обновлением позиции водителя
   height?:       string
   className?:    string
 }
@@ -27,21 +32,12 @@ function loadYmaps(apiKey: string): Promise<void> {
   if (typeof window !== 'undefined' && window._ymapsLoaded) return Promise.resolve()
 
   scriptPromise = new Promise((resolve, reject) => {
-    if (!apiKey || apiKey === 'undefined') {
-      reject(new Error('No API key'))
-      return
-    }
+    if (!apiKey || apiKey === 'undefined') { reject(new Error('No API key')); return }
     const script  = document.createElement('script')
     script.src    = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=ru_RU`
     script.async  = true
-    script.onload = () => window.ymaps.ready(() => {
-      window._ymapsLoaded = true
-      resolve()
-    })
-    script.onerror = () => {
-      scriptPromise = null // сброс чтобы можно было попробовать снова
-      reject(new Error('Failed to load Yandex Maps'))
-    }
+    script.onload = () => window.ymaps.ready(() => { window._ymapsLoaded = true; resolve() })
+    script.onerror = () => { scriptPromise = null; reject(new Error('Failed to load Yandex Maps')) }
     document.head.appendChild(script)
   })
   return scriptPromise
@@ -54,26 +50,28 @@ export default function YandexMap({
   height = '300px',
   className = '',
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef       = useRef<any>(null)
-  const markerRef    = useRef<any>(null)
-  const driverRef    = useRef<any>(null)
-  const routeRef     = useRef<any>(null)
-  const [loaded, setLoaded] = useState(false)
-  const [error,  setError]  = useState('')
+  const containerRef   = useRef<HTMLDivElement>(null)
+  const mapRef         = useRef<any>(null)
+  const markerRef      = useRef<any>(null)
+  const driverRef      = useRef<any>(null)
+  const multiRouteRef  = useRef<any>(null)
 
+  const [loaded,      setLoaded]      = useState(false)
+  const [error,       setError]       = useState('')
+  // Альтернативные маршруты (для navigate режима)
+  const [alternatives, setAlternatives] = useState<RouteAlternative[]>([])
+  const [activeRoute,  setActiveRoute]  = useState(0)
+
+  // Загрузка SDK
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window._ymapsLoaded) { setLoaded(true); return }
-    loadYmaps(apiKey)
-      .then(() => setLoaded(true))
-      .catch(e => setError(e.message))
+    loadYmaps(apiKey).then(() => setLoaded(true)).catch(e => setError(e.message))
   }, [apiKey])
 
   // Инициализация карты
   useEffect(() => {
     if (!loaded || !containerRef.current) return
-    // Если контейнер не имеет реальной высоты — не инициализируем
     if (containerRef.current.offsetHeight === 0) return
 
     const ymaps = window.ymaps
@@ -112,7 +110,6 @@ export default function YandexMap({
         map.geoObjects.add(pm)
         markerRef.current = pm
 
-        // Сначала пробуем через ymaps, если не вышло — через HTTP API
         let addr = ''
         try {
           const res = await ymaps.geocode(coords, { results: 1 })
@@ -120,7 +117,6 @@ export default function YandexMap({
         } catch {}
 
         if (!addr) {
-          // Fallback: HTTP Geocoder API
           try {
             const url  = `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${lng},${lat}&results=1&format=json&lang=ru_RU`
             const resp = await fetch(url)
@@ -129,21 +125,18 @@ export default function YandexMap({
               ?.GeoObject?.metaDataProperty?.GeocoderMetaData?.text || ''
           } catch {}
         }
-
-        // Если оба способа не дали адрес — показываем координаты
         if (!addr) addr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`
-
         pm.properties.set('balloonContent', addr)
         onPick(lat, lng, addr)
       })
     }
 
-    // ── Маршрут А→Б (статичный) ───────────────────────────────────
+    // ── Статичный маршрут А→Б ────────────────────────────────────
     if (mode === 'route' && originLat && destLat) {
       buildRoute(ymaps, map, originLat, originLng!, destLat, destLng!)
     }
 
-    // ── Слежение за водителем (для пассажира) ────────────────────
+    // ── Слежение за водителем (пассажир) ─────────────────────────
     if (mode === 'track' && driverLat) {
       const dm = new ymaps.Placemark(
         [driverLat, driverLng!],
@@ -152,7 +145,6 @@ export default function YandexMap({
       )
       map.geoObjects.add(dm)
       driverRef.current = dm
-
       if (passengerLat) {
         map.geoObjects.add(new ymaps.Placemark(
           [passengerLat, passengerLng!],
@@ -165,9 +157,9 @@ export default function YandexMap({
       }
     }
 
-    // ── Навигатор для водителя ────────────────────────────────────
-    // Строим маршрут + маркер машины + автоцентрирование
+    // ── Навигатор для водителя с альтернативными маршрутами ───────
     if (mode === 'navigate' && driverLat && originLat && destLat) {
+      // Маркер позиции водителя
       const dm = new ymaps.Placemark(
         [driverLat, driverLng!],
         { balloonContent: 'Вы' },
@@ -176,27 +168,58 @@ export default function YandexMap({
       map.geoObjects.add(dm)
       driverRef.current = dm
 
-      buildRoute(ymaps, map, originLat, originLng!, destLat, destLng!).then(r => {
-        routeRef.current = r
+      // MultiRoute — 3 варианта маршрута
+      const multiRoute = new ymaps.multiRouter.MultiRoute(
+        {
+          referencePoints: [[originLat, originLng!], [destLat, destLng!]],
+          params: { results: 3, routingMode: 'auto' },
+        },
+        {
+          boundsAutoApply:           true,
+          routeActiveStrokeColor:    '#4F46E5',
+          routeActiveStrokeWidth:    6,
+          routeStrokeColor:          '#94A3B8',
+          routeStrokeWidth:          4,
+          routeActiveStrokeStyle:    'solid',
+          wayPointVisible:           false,
+          pinVisible:                false,
+        }
+      )
+      map.geoObjects.add(multiRoute)
+      multiRouteRef.current = multiRoute
+
+      // Когда маршруты загружены — собираем информацию для панели
+      multiRoute.model.events.add('requestsuccess', () => {
+        const routes = multiRoute.getRoutes()
+        const alts: RouteAlternative[] = []
+        routes.each((route: any, i: number) => {
+          const props = route.properties.getAll()
+          alts.push({
+            index:    i,
+            duration: props.duration?.text  || '—',
+            distance: props.distance?.text  || '—',
+          })
+        })
+        setAlternatives(alts)
+        setActiveRoute(0)
       })
     }
 
     return () => {
       try { map.destroy() } catch {}
-      mapRef.current    = null
-      markerRef.current = null
-      driverRef.current = null
-      routeRef.current  = null
+      mapRef.current       = null
+      markerRef.current    = null
+      driverRef.current    = null
+      multiRouteRef.current = null
+      setAlternatives([])
     }
-  }, [loaded, mode, originLat, destLat])
-  // Намеренно не включаем driverLat в deps — обновляем через отдельный effect
+  }, [loaded, mode, originLat, destLat]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Обновление позиции водителя без пересоздания карты
   useEffect(() => {
     if (!driverRef.current || !driverLat) return
     try {
       driverRef.current.geometry.setCoordinates([driverLat, driverLng!])
-      // В режиме навигатора автоцентрируем с поворотом карты
       if (mapRef.current) {
         mapRef.current.setCenter([driverLat, driverLng!], mapRef.current.getZoom(), {
           duration: 300,
@@ -205,6 +228,16 @@ export default function YandexMap({
       }
     } catch {}
   }, [driverLat, driverLng])
+
+  // Переключение активного маршрута
+  function switchRoute(index: number) {
+    if (!multiRouteRef.current) return
+    try {
+      const routes = multiRouteRef.current.getRoutes()
+      multiRouteRef.current.setActiveRoute(routes.get(index))
+      setActiveRoute(index)
+    } catch {}
+  }
 
   if (error) return (
     <div
@@ -217,28 +250,44 @@ export default function YandexMap({
     </div>
   )
 
-  // Критично: используем style height вместо h-full чтобы div реально имел высоту
   return (
-    <div
-      className={`relative overflow-hidden ${className}`}
-      style={{ height }}
-    >
+    <div className={`relative overflow-hidden ${className}`} style={{ height }}>
       {!loaded && (
         <div className="absolute inset-0 bg-gray-800 flex flex-col items-center justify-center z-10">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent mb-3" />
           <p className="text-xs text-gray-400">Загружаем карту...</p>
         </div>
       )}
-      {/* Контейнер карты должен иметь явные размеры */}
-      <div
-        ref={containerRef}
-        style={{ width: '100%', height: '100%', minHeight: '1px' }}
-      />
+
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '1px' }} />
+
+      {/* Панель альтернативных маршрутов (только navigate + 2+ вариантов) */}
+      {mode === 'navigate' && alternatives.length > 1 && (
+        <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+          {alternatives.map(alt => (
+            <button
+              key={alt.index}
+              onClick={() => switchRoute(alt.index)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
+                activeRoute === alt.index
+                  ? 'bg-indigo-600 text-white shadow-indigo-300'
+                  : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white'
+              }`}
+            >
+              <span>{alt.index === 0 ? '🏎' : alt.index === 1 ? '🛣' : '🔄'}</span>
+              <span>{alt.duration}</span>
+              <span className={activeRoute === alt.index ? 'text-indigo-200' : 'text-gray-400'}>
+                {alt.distance}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-// Строим маршрут и красим его
+// Строим статичный маршрут и красим его
 async function buildRoute(
   ymaps: any, map: any,
   oLat: number, oLng: number,
@@ -265,7 +314,6 @@ async function buildRoute(
     ))
     return route
   } catch {
-    // Если построение маршрута не удалось — просто точки
     map.geoObjects.add(new ymaps.Placemark([oLat, oLng], {}, { preset: 'islands#greenDotIcon' }))
     map.geoObjects.add(new ymaps.Placemark([dLat, dLng], {}, { preset: 'islands#redDotIcon' }))
     map.setBounds([

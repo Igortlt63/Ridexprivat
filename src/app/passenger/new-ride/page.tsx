@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { z } from 'zod'
 import {
   ChevronLeft, MapPin, Navigation, Luggage, PawPrint,
   CigaretteOff, Users, MessageSquare, Banknote, Crosshair
@@ -13,6 +14,15 @@ import dynamic from 'next/dynamic'
 const YandexMap = dynamic(() => import('@/components/map/YandexMap'), { ssr: false })
 
 type Step = 'origin' | 'dest' | 'details'
+
+// ── Zod-схема для шага «Детали» ───────────────────────────────
+const detailsSchema = z.object({
+  price:   z.number({ invalid_type_error: 'Укажите цену' })
+             .min(1, 'Минимальная цена — 1 ₽')
+             .max(999_999, 'Максимальная цена — 999 999 ₽'),
+  seats:   z.number().min(1).max(8),
+  comment: z.string().max(500, 'Максимум 500 символов').optional(),
+})
 
 // Геокодирование через Яндекс
 async function geocodeAddress(query: string, apiKey: string) {
@@ -183,7 +193,18 @@ export default function NewRidePage() {
 
   async function onSubmit() {
     if (!hasOrigin || !hasDest) { toast.error('Укажите маршрут'); return }
-    if (!price || Number(price) < 1) { toast.error('Укажите цену'); return }
+
+    // Zod-валидация деталей поездки
+    const parsed = detailsSchema.safeParse({
+      price:   Number(price),
+      seats:   Number(seats),
+      comment: comment || undefined,
+    })
+    if (!parsed.success) {
+      const msg = parsed.error.errors[0]?.message || 'Проверьте введённые данные'
+      toast.error(msg)
+      return
+    }
 
     setSubmitting(true)
     const { data: { user } } = await supabase.auth.getUser()
