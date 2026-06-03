@@ -94,7 +94,7 @@ export default function RideDetailPage() {
       }
 
       const [{ data: offersData }, { data: msgs }] = await Promise.all([
-        supabase.from('ride_offers').select('*, driver:profiles(*)')
+        supabase.from('ride_offers').select('*, driver:profiles(*), vehicle:driver_vehicles(brand,model,year,color,plate_number,photo_url,seats_count)')
           .eq('ride_id', rideId).eq('status', 'pending')
           .order('created_at', { ascending: false }),
         supabase.from('ride_messages').select('*, sender:profiles(*)')
@@ -154,7 +154,7 @@ export default function RideDetailPage() {
           filter: `ride_id=eq.${rideId}`,
         }, async ({ new: offer }) => {
           const { data } = await supabase
-            .from('ride_offers').select('*, driver:profiles(*)')
+            .from('ride_offers').select('*, driver:profiles(*), vehicle:driver_vehicles(brand,model,year,color,plate_number,photo_url,seats_count)')
             .eq('id', offer.id).single()
           if (data) {
             setOffers(prev => {
@@ -467,10 +467,13 @@ export default function RideDetailPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {offers.map(offer => (
+                {offers.map(offer => {
+                  const veh = offer.vehicle
+                  return (
                   <div key={offer.id} className="card p-4">
+                    {/* Водитель */}
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+                      <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
                         {offer.driver?.avatar_url
                           ? <img src={offer.driver.avatar_url} className="w-10 h-10 object-cover" alt="" />
                           : <Car className="w-5 h-5 text-gray-500" />
@@ -495,6 +498,35 @@ export default function RideDetailPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* Автомобиль водителя */}
+                    {veh && (
+                      <div className="flex items-center gap-3 mb-3 bg-gray-50 rounded-xl p-3">
+                        {(veh as any).photo_url ? (
+                          <img
+                            src={(veh as any).photo_url}
+                            className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                            alt=""
+                          />
+                        ) : (
+                          <div className="w-14 h-14 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Car className="w-7 h-7 text-gray-400" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-sm text-gray-900">
+                            {(veh as any).brand} {(veh as any).model} {(veh as any).year}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {(veh as any).color} · {(veh as any).plate_number}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {(veh as any).seats_count} мест
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {offer.message && (
                       <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 mb-3">
                         "{offer.message}"
@@ -509,7 +541,8 @@ export default function RideDetailPage() {
                       </button>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

@@ -18,7 +18,9 @@ import dynamic from 'next/dynamic'
 const YandexMap = dynamic(() => import('@/components/map/YandexMap'), { ssr: false })
 
 // ── Модалка торга ──────────────────────────────────────────────
-function OfferModal({ ride, myId, onClose }: { ride: Ride; myId: string; onClose: () => void }) {
+function OfferModal({ ride, myId, vehicleId, onClose }: {
+  ride: Ride; myId: string; vehicleId?: string; onClose: () => void
+}) {
   const supabase = createClient()
   const [price,   setPrice]   = useState(ride.passenger_price)
   const [message, setMessage] = useState('')
@@ -27,8 +29,12 @@ function OfferModal({ ride, myId, onClose }: { ride: Ride; myId: string; onClose
   async function send() {
     setSending(true)
     const { error } = await supabase.from('ride_offers').insert({
-      ride_id: ride.id, driver_id: myId,
-      offered_price: price, message: message.trim() || null, status: 'pending',
+      ride_id:       ride.id,
+      driver_id:     myId,
+      vehicle_id:    vehicleId || null,
+      offered_price: price,
+      message:       message.trim() || null,
+      status:        'pending',
     })
     if (!error) {
       await supabase.from('rides').update({ status: 'negotiating' }).eq('id', ride.id)
@@ -499,7 +505,12 @@ export default function DriverPage() {
 
       {/* Модалка торга */}
       {selectedRide && (
-        <OfferModal ride={selectedRide} myId={myId} onClose={() => setSelectedRide(null)} />
+        <OfferModal
+          ride={selectedRide}
+          myId={myId}
+          vehicleId={vehicles[0]?.id}
+          onClose={() => setSelectedRide(null)}
+        />
       )}
     </div>
   )

@@ -1,0 +1,50 @@
+// Полная база марок и моделей автомобилей
+export const CAR_BRANDS: Record<string, string[]> = {
+  "Lada (ВАЗ)": ["Granta","Vesta","XRAY","Niva","Niva Travel","2101","2102","2103","2104","2105","2106","2107","2108","2109","21099","2110","2111","2112","2113","2114","2115","Kalina","Priora","Largus","Oka"],
+  "Audi": ["A1","A2","A3","A4","A5","A6","A7","A8","Q2","Q3","Q4 e-tron","Q5","Q7","Q8","TT","R8","e-tron","S3","S4","S5","S6","S7","S8","RS3","RS4","RS5","RS6","RS7"],
+  "BMW": ["1 серия","2 серия","3 серия","4 серия","5 серия","6 серия","7 серия","8 серия","X1","X2","X3","X4","X5","X6","X7","Z4","M2","M3","M4","M5","M8","iX","i3","i4","i7"],
+  "Mercedes-Benz": ["A-класс","B-класс","C-класс","E-класс","S-класс","CLA","CLS","GLA","GLB","GLC","GLE","GLS","G-класс","AMG GT","EQC","EQE","EQS","Sprinter","Vito"],
+  "Toyota": ["Camry","Corolla","RAV4","Land Cruiser","Land Cruiser Prado","Hilux","Yaris","Auris","Avensis","C-HR","Highlander","Fortuner","Rush","Prius","GR86","Supra","Tundra","Sequoia","4Runner"],
+  "Volkswagen": ["Polo","Golf","Jetta","Passat","Tiguan","Touareg","Touran","Amarok","Caddy","Transporter","ID.3","ID.4","ID.6","Arteon","Phaeton","Sharan","Up"],
+  "Hyundai": ["Solaris","Elantra","Sonata","Tucson","Santa Fe","Creta","i10","i20","i30","i40","Accent","Genesis","Staria","Ioniq","NEXO","Kona"],
+  "Kia": ["Rio","Ceed","Sportage","Sorento","Stinger","Telluride","Carnival","Niro","EV6","Picanto","Cerato","Optima","Soul","Seltos","K5","K8"],
+  "Nissan": ["Almera","Sentra","Teana","Qashqai","X-Trail","Murano","Pathfinder","Navara","Patrol","Juke","Note","Micra","Leaf","GT-R","370Z","Titan"],
+  "Renault": ["Logan","Sandero","Duster","Kaptur","Arkana","Megane","Laguna","Fluence","Koleos","Scenic","Kangoo","Master","Trafic","Zoe","Talisman"],
+  "Ford": ["Focus","Fiesta","Mondeo","Kuga","Explorer","Escape","F-150","Ranger","Transit","Mustang","Edge","Bronco","EcoSport","Puma","Fusion","Expedition"],
+  "Chevrolet": ["Cruze","Aveo","Spark","Malibu","Camaro","Corvette","Equinox","Traverse","Tahoe","Suburban","Silverado","Colorado","Blazer","Trax"],
+  "Mazda": ["Mazda2","Mazda3","Mazda6","CX-3","CX-30","CX-5","CX-9","CX-60","MX-5","MX-30","BT-50","RX-8"],
+  "Honda": ["Civic","Accord","CR-V","HR-V","Pilot","Jazz","City","Freed","Fit","e:Ny1","Ridgeline","Passport","Odyssey","ZR-V"],
+  "Mitsubishi": ["Lancer","Outlander","ASX","Eclipse Cross","L200","Pajero","Pajero Sport","Galant","Carisma","Grandis","Colt","Space Star"],
+  "Skoda": ["Octavia","Fabia","Superb","Kamiq","Karoq","Kodiaq","Enyaq","Rapid","Roomster","Yeti"],
+  "Peugeot": ["208","308","508","2008","3008","5008","Rifter","Partner","Traveller","Expert","e-208","e-2008"],
+  "Opel": ["Astra","Insignia","Mokka","Crossland","Grandland","Corsa","Zafira","Vectra","Meriva","Antara","Adam"],
+  "Seat": ["Ibiza","Leon","Arona","Ateca","Tarraco","Alhambra","Toledo","Mii","Cupra Formentor"],
+  "Subaru": ["Impreza","Legacy","Outback","Forester","XV","BRZ","WRX","Ascent","Crosstrek","Levorg"],
+  "Suzuki": ["Swift","Vitara","SX4","Jimny","Ignis","Baleno","S-Cross","Ertiga","Swace","Across"],
+  "Lexus": ["IS","ES","GS","LS","UX","NX","RX","GX","LX","LC","RC","LM","NX 450h+"],
+  "Volvo": ["S60","S90","V60","V90","XC40","XC60","XC90","C40","EX90","EX30"],
+  "Land Rover": ["Discovery","Discovery Sport","Defender","Range Rover","Range Rover Sport","Range Rover Evoque","Range Rover Velar","Freelander"],
+  "Jeep": ["Wrangler","Cherokee","Grand Cherokee","Renegade","Compass","Gladiator","Commander"],
+  "Porsche": ["911","Cayenne","Macan","Panamera","Taycan","718 Boxster","718 Cayman"],
+  "Infiniti": ["Q50","Q60","Q70","QX50","QX55","QX60","QX80","G37","FX35"],
+  "Acura": ["TLX","RDX","MDX","ILX","NSX"],
+  "Alfa Romeo": ["Giulia","Stelvio","Giulietta","159","Tonale","4C"],
+  "Fiat": ["500","Punto","Tipo","Bravo","Doblo","Ducato","Panda","Fastback","Pulse"],
+  "Geely": ["Atlas","Coolray","Tugella","Emgrand","Monjaro","Okavango","Preface"],
+  "Haval": ["F7","F7x","H6","H9","Jolion","Dargo","M6","H2"],
+  "Chery": ["Tiggo 4","Tiggo 7","Tiggo 8","Arrizo 5","Arrizo 8","Exeed TXL","Exeed RX"],
+  "Changan": ["CS35","CS55","CS75","CS95","UNI-T","UNI-K","Uni-V","Lamore"],
+  "Omoda": ["C5","S5"],
+  "Exeed": ["TXL","VX","RX","LX"],
+  "GAZ": ["Gazelle","Sobol","Valdai","Next","Argo"],
+  "УАЗ": ["Patriot","Hunter","Пикап","Буханка","452"],
+  "ГАЗ Volga": ["31105","3110","2410","Siber"],
+  "Москвич": ["3","6","Е4","Е12"],
+  "Другое": ["Другая модель"],
+}
+
+export const BRAND_LIST = Object.keys(CAR_BRANDS).sort()
+
+export function getModels(brand: string): string[] {
+  return CAR_BRANDS[brand] || []
+}
