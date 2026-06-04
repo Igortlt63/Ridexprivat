@@ -82,7 +82,7 @@ export default function EarningsPage() {
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         {/* Переключатель периода */}
         <div className="flex gap-1.5 bg-white rounded-2xl p-1.5 border border-gray-100">
-          {[
+          {([
             { key: 'day',   label: 'Сегодня' },
             { key: 'week',  label: 'Неделя' },
             { key: 'month', label: 'Месяц' },
