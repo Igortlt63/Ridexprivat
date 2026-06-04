@@ -69,7 +69,7 @@ export default function NewListingPage() {
   useEffect(() => {
     // Загружаем категории из БД — но показываем дефолтные сразу
     supabase.from('market_categories').select('*').order('sort_order')
-      .then(({ data }) => { if (data && data.length > 0) setCategories(data as any) })
+      .then(({ data }) => { if (data && data.length > 0) setCategories(data as typeof DEFAULT_CATEGORIES) })
 
     // Автозаполняем контакты
     supabase.auth.getUser().then(async ({ data: { user } }) => {

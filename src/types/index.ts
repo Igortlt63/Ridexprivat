@@ -90,6 +90,7 @@ export interface Ride {
 
   scheduled_at: string | null
   started_at: string | null
+  arrived_at: string | null   // водитель прибыл к точке посадки
   completed_at: string | null
   expires_at: string
   created_at: string

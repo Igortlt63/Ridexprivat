@@ -18,12 +18,13 @@ import dynamic from 'next/dynamic'
 const YandexMap = dynamic(() => import('@/components/map/YandexMap'), { ssr: false })
 
 const STATUS_INFO: Record<string, { label: string; color: string; bg: string }> = {
-  searching:   { label: 'Ищем водителей...',   color: 'text-blue-600',   bg: 'bg-blue-50' },
-  negotiating: { label: 'Идёт торг',           color: 'text-amber-700',  bg: 'bg-amber-50' },
-  accepted:    { label: 'Водитель едет к вам',  color: 'text-green-700',  bg: 'bg-green-50' },
-  in_progress: { label: 'Вы в пути!',           color: 'text-indigo-700', bg: 'bg-indigo-50' },
-  completed:   { label: 'Поездка завершена',    color: 'text-gray-600',   bg: 'bg-gray-100' },
-  cancelled:   { label: 'Отменена',             color: 'text-rose-700',   bg: 'bg-rose-50' },
+  searching:   { label: 'Ищем водителей...',      color: 'text-blue-600',   bg: 'bg-blue-50' },
+  negotiating: { label: 'Идёт торг',              color: 'text-amber-700',  bg: 'bg-amber-50' },
+  accepted:    { label: 'Водитель едет к вам',     color: 'text-green-700',  bg: 'bg-green-50' },
+  waiting:     { label: 'Водитель ожидает вас!',   color: 'text-amber-700',  bg: 'bg-amber-50' },
+  in_progress: { label: 'Вы в пути!',              color: 'text-indigo-700', bg: 'bg-indigo-50' },
+  completed:   { label: 'Поездка завершена',       color: 'text-gray-600',   bg: 'bg-gray-100' },
+  cancelled:   { label: 'Отменена',                color: 'text-rose-700',   bg: 'bg-rose-50' },
 }
 
 
@@ -41,10 +42,12 @@ export default function RideDetailPage() {
   const [chatMsg,   setChatMsg]   = useState('')
   const [loading,   setLoading]   = useState(true)
   const [tab,       setTab]       = useState<'offers'|'map'|'chat'>('offers')
-  const [driverPos, setDriverPos] = useState<{lat:number;lng:number}|null>(null)
-  const chatEndRef  = useRef<HTMLDivElement>(null)
-  const rideRef     = useRef<Ride | null>(null) // для использования в realtime callback
-  const channelRef  = useRef<RealtimeChannel | null>(null)
+  const [driverPos,   setDriverPos]   = useState<{lat:number;lng:number}|null>(null)
+  const [waitSeconds, setWaitSeconds] = useState(0)
+  const chatEndRef    = useRef<HTMLDivElement>(null)
+  const rideRef       = useRef<Ride | null>(null)
+  const channelRef    = useRef<RealtimeChannel | null>(null)
+  const waitTimerRef  = useRef<ReturnType<typeof setInterval>>()
 
   // Синхронизируем ref с состоянием чтобы realtime видел актуальный ride
   useEffect(() => { rideRef.current = ride }, [ride])
@@ -63,6 +66,13 @@ export default function RideDetailPage() {
       if (!rideData) { router.push('/passenger'); return }
       setRide(rideData as Ride)
       rideRef.current = rideData as Ride
+
+      // Запускаем таймер если водитель уже прибыл
+      if (rideData.arrived_at) {
+        const elapsed = Math.floor((Date.now() - new Date(rideData.arrived_at).getTime()) / 1000)
+        setWaitSeconds(elapsed)
+        waitTimerRef.current = setInterval(() => setWaitSeconds(s => s + 1), 1000)
+      }
 
       // Если поездка уже активна — сразу открываем карту
       if (['accepted', 'in_progress'].includes(rideData.status)) {
@@ -111,6 +121,15 @@ export default function RideDetailPage() {
             }
           } else {
             setRide(prev => prev ? { ...prev, ...u } as Ride : prev)
+          }
+
+          // Водитель нажал «На месте» — запускаем таймер
+          if (u.arrived_at && !rideRef.current?.arrived_at) {
+            toast('📍 Водитель прибыл и ожидает вас!', { icon: '🚗', duration: 5000 })
+            const elapsed = 0
+            setWaitSeconds(elapsed)
+            if (waitTimerRef.current) clearInterval(waitTimerRef.current)
+            waitTimerRef.current = setInterval(() => setWaitSeconds(s => s + 1), 1000)
           }
 
           if (u.status === 'accepted') {
@@ -188,6 +207,7 @@ export default function RideDetailPage() {
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
       }
+      if (waitTimerRef.current) clearInterval(waitTimerRef.current)
     }
   }, [rideId])
 
@@ -253,8 +273,11 @@ export default function RideDetailPage() {
   )
   if (!ride) return null
 
-  const si       = STATUS_INFO[ride.status] || STATUS_INFO.searching
-  const isActive = ['accepted', 'in_progress'].includes(ride.status)
+  const hasArrived = Boolean(ride.arrived_at)
+  const statusKey  = hasArrived && ride.status === 'accepted' ? 'waiting' : ride.status
+  const si         = STATUS_INFO[statusKey] || STATUS_INFO.searching
+  const isActive   = ['accepted', 'in_progress'].includes(ride.status)
+  const waitFormatted = `${String(Math.floor(waitSeconds / 60)).padStart(2, '0')}:${String(waitSeconds % 60).padStart(2, '0')}`
   const driver   = ride.driver
 
   // ── Экран активной поездки (принята или в пути) ────────────────
@@ -426,18 +449,24 @@ export default function RideDetailPage() {
 
         {/* Статус */}
         <div className={`rounded-2xl p-4 flex items-center gap-3 ${si.bg}`}>
-          {ride.status === 'searching' && (
-            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse flex-shrink-0" />
+          {(ride.status === 'searching' || ride.status === 'negotiating' || hasArrived) && (
+            <div className={`w-2.5 h-2.5 rounded-full animate-pulse flex-shrink-0 ${
+              hasArrived ? 'bg-amber-500' : ride.status === 'searching' ? 'bg-blue-500' : 'bg-amber-500'
+            }`} />
           )}
-          {ride.status === 'negotiating' && (
-            <div className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse flex-shrink-0" />
-          )}
-          <div>
+          <div className="flex-1">
             <p className={`font-semibold ${si.color}`}>{si.label}</p>
             {ride.status === 'searching' && (
               <p className="text-xs text-gray-500 mt-0.5">Водители видят вашу заявку</p>
             )}
           </div>
+          {/* Таймер ожидания водителя */}
+          {hasArrived && ride.status === 'accepted' && (
+            <div className="text-right">
+              <p className="text-xs text-amber-600 mb-0.5">Водитель ждёт</p>
+              <p className="font-bold text-amber-700 text-lg tabular-nums">{waitFormatted}</p>
+            </div>
+          )}
         </div>
 
         {/* Маршрут + цена */}

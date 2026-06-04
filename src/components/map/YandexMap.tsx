@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { shortenAddress } from '@/lib/address'
 
 declare global {
   interface Window { ymaps: any; _ymapsLoaded?: boolean }
@@ -126,6 +127,7 @@ export default function YandexMap({
           } catch {}
         }
         if (!addr) addr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+        addr = shortenAddress(addr)
         pm.properties.set('balloonContent', addr)
         onPick(lat, lng, addr)
       })

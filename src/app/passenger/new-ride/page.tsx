@@ -9,6 +9,7 @@ import {
   CigaretteOff, Users, MessageSquare, Banknote, Crosshair
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { shortenAddress } from '@/lib/address'
 import dynamic from 'next/dynamic'
 
 const YandexMap = dynamic(() => import('@/components/map/YandexMap'), { ssr: false })
@@ -34,7 +35,11 @@ async function geocodeAddress(query: string, apiKey: string) {
     return members.map((m: any) => {
       const obj    = m.GeoObject
       const coords = obj.Point.pos.split(' ').map(Number)
-      return { address: obj.metaDataProperty.GeocoderMetaData.text, lat: coords[1], lng: coords[0] }
+      return {
+        address: shortenAddress(obj.metaDataProperty.GeocoderMetaData.text),
+        lat: coords[1],
+        lng: coords[0],
+      }
     })
   } catch { return [] }
 }
@@ -176,7 +181,7 @@ export default function NewRidePage() {
     navigator.geolocation.getCurrentPosition(
       async pos => {
         const { latitude: lat, longitude: lng } = pos.coords
-        const address = await reverseGeocode(lat, lng, apiKey)
+        const address = shortenAddress(await reverseGeocode(lat, lng, apiKey))
         setOriginLat(lat); setOriginLng(lng); setOriginAddress(address)
         toast.success('Местоположение определено')
         setGeoLoading(false)

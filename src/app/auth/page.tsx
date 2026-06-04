@@ -12,13 +12,14 @@ export default function AuthPage() {
   const router  = useRouter()
   const supabase = createClient()
 
-  const [mode,      setMode]      = useState<Mode>('login')
-  const [email,     setEmail]     = useState('')
-  const [fullName,  setFullName]  = useState('')
-  const [password,  setPassword]  = useState('')
-  const [password2, setPassword2] = useState('')
-  const [showPass,  setShowPass]  = useState(false)
-  const [loading,   setLoading]   = useState(false)
+  const [mode,       setMode]       = useState<Mode>('login')
+  const [email,      setEmail]      = useState('')
+  const [fullName,   setFullName]   = useState('')
+  const [password,   setPassword]   = useState('')
+  const [password2,  setPassword2]  = useState('')
+  const [showPass,   setShowPass]   = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
+  const [loading,    setLoading]    = useState(false)
 
   // Очищаем поля при смене режима
   function switchMode(m: Mode) {
@@ -274,6 +275,7 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => setShowPass(v => !v)}
+                    aria-label={showPass ? 'Скрыть пароль' : 'Показать пароль'}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -307,9 +309,18 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* Ссылка "Забыли пароль" */}
+            {/* Запомнить меня + Забыли пароль */}
             {mode === 'login' && (
-              <div className="flex justify-end -mt-1">
+              <div className="flex items-center justify-between -mt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 accent-indigo-600"
+                  />
+                  <span className="text-xs text-gray-500">Запомнить меня</span>
+                </label>
                 <button
                   onClick={() => switchMode('reset')}
                   className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"

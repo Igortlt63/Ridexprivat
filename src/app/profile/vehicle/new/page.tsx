@@ -83,7 +83,7 @@ export default function NewVehiclePage() {
     // Если поле photo_url есть — обновим
     if (!error && photoUrl) {
       await supabase.from('driver_vehicles')
-        .update({ photo_url: photoUrl } as any)
+        .update({ photo_url: photoUrl })
         .eq('driver_id', user.id)
         .eq('plate_number', plate.trim().toUpperCase())
     }

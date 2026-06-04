@@ -77,7 +77,7 @@ export default function PassengerPage() {
             .from('rides').select('passenger_id').eq('id', offer.ride_id).single()
           if (ride?.passenger_id === user.id) {
             setActiveRides(prev => prev.map(r =>
-              r.id === offer.ride_id ? { ...r, status: 'negotiating' as any } : r
+              r.id === offer.ride_id ? { ...r, status: 'negotiating' as const } : r
             ))
           }
         })

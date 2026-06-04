@@ -87,8 +87,8 @@ export default function EarningsPage() {
             { key: 'week',  label: 'Неделя' },
             { key: 'month', label: 'Месяц' },
             { key: 'all',   label: 'Всё время' },
-          ].map(p => (
-            <button key={p.key} onClick={() => setPeriod(p.key as any)}
+          ] as const).map(p => (
+            <button key={p.key} onClick={() => setPeriod(p.key)}
               className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
                 period === p.key ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}

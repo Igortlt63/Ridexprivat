@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import {
   ChevronLeft, Phone, MessageSquare, CheckCircle,
-  Star, Send, Navigation, Map
+  Star, Send, Navigation, Map, MapPin, Clock
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Ride, RideMessage } from '@/types'
@@ -29,8 +29,10 @@ export default function DriverRidePage() {
   const [tab,         setTab]         = useState<'map' | 'chat'>('map')
   const [loading,     setLoading]     = useState(true)
   const [myPos,       setMyPos]       = useState<{ lat: number; lng: number } | null>(null)
-  const [cancelling,  setCancelling]  = useState(false)
-  const chatEndRef  = useRef<HTMLDivElement>(null)
+  const [cancelling,   setCancelling]  = useState(false)
+  const [waitSeconds,  setWaitSeconds] = useState(0)
+  const waitTimerRef   = useRef<ReturnType<typeof setInterval>>()
+  const chatEndRef     = useRef<HTMLDivElement>(null)
   const geoRef      = useRef<ReturnType<typeof setInterval>>()
   const channelRef  = useRef<RealtimeChannel | null>(null)
 
@@ -51,6 +53,13 @@ export default function DriverRidePage() {
         return
       }
       setRide(data as Ride)
+
+      // Если уже прибыли раньше — запускаем таймер с правильным смещением
+      if (data.arrived_at) {
+        const elapsed = Math.floor((Date.now() - new Date(data.arrived_at).getTime()) / 1000)
+        setWaitSeconds(elapsed)
+        waitTimerRef.current = setInterval(() => setWaitSeconds(s => s + 1), 1000)
+      }
 
       const { data: msgs } = await supabase
         .from('ride_messages').select('*, sender:profiles(*)')
@@ -88,7 +97,8 @@ export default function DriverRidePage() {
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
       }
-      if (geoRef.current) clearInterval(geoRef.current)
+      if (geoRef.current)     clearInterval(geoRef.current)
+      if (waitTimerRef.current) clearInterval(waitTimerRef.current)
     }
   }, [rideId])
 
@@ -108,6 +118,20 @@ export default function DriverRidePage() {
     )
     update()
     geoRef.current = setInterval(update, 10000) // каждые 10 сек
+  }
+
+  /** Водитель нажал «На месте» — фиксируем время прибытия и запускаем таймер */
+  async function arriveAtPickup() {
+    const now = new Date().toISOString()
+    const { error } = await supabase.from('rides')
+      .update({ arrived_at: now })
+      .eq('id', rideId)
+    if (error) { toast.error('Ошибка: ' + error.message); return }
+    setRide(prev => prev ? { ...prev, arrived_at: now } as Ride : prev)
+    setWaitSeconds(0)
+    if (waitTimerRef.current) clearInterval(waitTimerRef.current)
+    waitTimerRef.current = setInterval(() => setWaitSeconds(s => s + 1), 1000)
+    toast.success('📍 Пассажир уведомлён — вы на месте!')
   }
 
   async function cancelRide() {
@@ -152,12 +176,15 @@ export default function DriverRidePage() {
 
   async function completeRide() {
     if (!confirm('Завершить поездку?')) return
-    await supabase.from('rides')
+    const { error } = await supabase.from('rides')
       .update({ status: 'completed', completed_at: new Date().toISOString() })
       .eq('id', rideId)
+    if (error) { toast.error('Ошибка завершения: ' + error.message); return }
     if (geoRef.current) clearInterval(geoRef.current)
+    // Обновляем локальное состояние сразу — не ждём realtime
+    // и НЕ делаем редирект, чтобы водитель мог оставить отзыв
+    setRide(prev => prev ? { ...prev, status: 'completed' } as Ride : prev)
     toast.success('✅ Поездка завершена!')
-    router.replace('/driver')
   }
 
   async function sendMessage() {
@@ -179,6 +206,10 @@ export default function DriverRidePage() {
   const isAccepted = ride.status === 'accepted'
   const isActive   = ride.status === 'in_progress'
   const isDone     = ride.status === 'completed'
+  const hasArrived = Boolean(ride.arrived_at)
+
+  // Форматируем секунды в мм:сс
+  const waitFormatted = `${String(Math.floor(waitSeconds / 60)).padStart(2, '0')}:${String(waitSeconds % 60).padStart(2, '0')}`
 
   // Для навигатора:
   // accepted — маршрут от текущей позиции водителя до точки посадки
@@ -219,8 +250,11 @@ export default function DriverRidePage() {
             </div>
           </div>
           {passenger?.phone && (
-            <a href={`tel:${passenger.phone}`}
-              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-colors">
+            <a
+              href={`tel:${passenger.phone}`}
+              aria-label={`Позвонить пассажиру ${passenger.full_name || ''}`}
+              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-colors"
+            >
               <Phone className="w-4 h-4" /> Позвонить
             </a>
           )}
@@ -339,12 +373,30 @@ export default function DriverRidePage() {
       {!isDone && (
         <div className="bg-gray-900 px-4 py-3 flex-shrink-0 space-y-2">
           <div className="max-w-lg mx-auto">
-            {isAccepted && (
-              <button onClick={startRide}
-                className="w-full py-4 bg-green-600 hover:bg-green-700 active:scale-95 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all">
-                <Navigation className="w-5 h-5" />
-                Пассажир сел — начать поездку
+            {isAccepted && !hasArrived && (
+              <button onClick={arriveAtPickup}
+                className="w-full py-4 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all">
+                <MapPin className="w-5 h-5" />
+                На месте — жду пассажира
               </button>
+            )}
+
+            {isAccepted && hasArrived && (
+              <div className="space-y-2">
+                {/* Таймер ожидания */}
+                <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm font-medium">Время ожидания</span>
+                  </div>
+                  <span className="font-bold text-amber-700 text-lg tabular-nums">{waitFormatted}</span>
+                </div>
+                <button onClick={startRide}
+                  className="w-full py-4 bg-green-600 hover:bg-green-700 active:scale-95 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all">
+                  <Navigation className="w-5 h-5" />
+                  Пассажир сел — начать поездку
+                </button>
+              </div>
             )}
             {isActive && (
               <button onClick={completeRide}

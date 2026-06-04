@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, MapPin, Plus, Trash2, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import type { SavedRoute } from '@/types'
 import toast from 'react-hot-toast'
 
 export default function SavedRoutesPage() {
   const router   = useRouter()
   const supabase = createClient()
-  const [routes,  setRoutes]  = useState<any[]>([])
+  const [routes,  setRoutes]  = useState<SavedRoute[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function SavedRoutesPage() {
       if (!user) { router.push('/auth'); return }
       const { data } = await supabase
         .from('saved_routes').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-      setRoutes(data || [])
+      setRoutes((data as SavedRoute[]) || [])
       setLoading(false)
     }
     load()

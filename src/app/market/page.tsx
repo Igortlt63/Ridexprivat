@@ -226,13 +226,53 @@ export default function MarketPage() {
               Подать первым
             </Link>
           </div>
-        ) : (
+        ) : selected !== null ? (
+          // Конкретная категория — просто список
           <div className="space-y-3">
             {listings.map(listing => (
               <ListingCard key={listing.id} listing={listing} />
             ))}
 
-            {/* Пагинация — кнопка «Загрузить ещё» */}
+            {/* Пагинация */}
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full py-3 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                {loadingMore ? 'Загрузка...' : 'Загрузить ещё объявления'}
+              </button>
+            )}
+          </div>
+        ) : (
+          // Режим «Все» — группируем по категориям
+          <div className="space-y-6">
+            {categories.map(cat => {
+              const catListings = listings.filter(l => l.category_id === cat.id)
+              if (catListings.length === 0) return null
+              return (
+                <div key={cat.id}>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                      <span>{CATEGORY_ICONS[cat.slug] || '📦'}</span>
+                      <span>{cat.name}</span>
+                      <span className="text-gray-400 font-normal">({catListings.length})</span>
+                    </h2>
+                    <button
+                      onClick={() => selectCategory(cat.id)}
+                      className="text-xs text-indigo-600 hover:underline"
+                    >
+                      Все →
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {catListings.slice(0, 3).map(listing => (
+                      <ListingCard key={listing.id} listing={listing} />
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
             {hasMore && (
               <button
                 onClick={loadMore}

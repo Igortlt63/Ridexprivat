@@ -4,13 +4,19 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Star } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import type { Review, Profile } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
+
+type ReviewWithProfiles = Review & {
+  reviewer?: Pick<Profile, 'full_name' | 'avatar_url'> | null
+  reviewed?: Pick<Profile, 'full_name'> | null
+}
 
 export default function ReviewsPage() {
   const router   = useRouter()
   const supabase = createClient()
-  const [reviews, setReviews] = useState<any[]>([])
+  const [reviews, setReviews] = useState<ReviewWithProfiles[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab]         = useState<'received' | 'given'>('received')
   const [myId, setMyId]       = useState('')
@@ -33,7 +39,7 @@ export default function ReviewsPage() {
       .select('*, reviewer:profiles!reviews_reviewer_id_fkey(full_name, avatar_url), reviewed:profiles!reviews_reviewed_id_fkey(full_name)')
       .eq(field, uid)
       .order('created_at', { ascending: false })
-    setReviews(data || [])
+    setReviews((data as ReviewWithProfiles[]) || [])
   }
 
   async function switchTab(t: 'received' | 'given') {
