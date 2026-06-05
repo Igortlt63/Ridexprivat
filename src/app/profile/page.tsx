@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, DriverVehicle } from '@/types'
+import { useAppStore } from '@/store/useAppStore'
+import type { Theme } from '@/store/useAppStore'
 
 // ── Инлайн-редактор поля ──────────────────────────────────────
 function EditableField({
@@ -84,6 +86,8 @@ export default function ProfilePage() {
   const router   = useRouter()
   const supabase = createClient()
 
+  const { activeRole, setActiveRole, theme, setTheme } = useAppStore()
+
   const [profile,  setProfile]  = useState<Profile | null>(null)
   const [vehicles, setVehicles] = useState<DriverVehicle[]>([])
   const [loading,  setLoading]  = useState(true)
@@ -142,17 +146,17 @@ export default function ProfilePage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Шапка */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
+            <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl" aria-label="Назад">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Профиль</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Профиль</h1>
           </div>
-          <button onClick={logout} className="btn-ghost p-2 rounded-xl text-rose-500" title="Выйти">
+          <button onClick={logout} className="btn-ghost p-2 rounded-xl text-rose-500" aria-label="Выйти">
             <LogOut className="w-5 h-5" />
           </button>
         </div>
@@ -184,7 +188,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex-1">
-              <p className="font-bold text-lg text-gray-900">{profile?.full_name || 'Имя не указано'}</p>
+              <p className="font-bold text-lg text-gray-900 dark:text-white">{profile?.full_name || 'Имя не указано'}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {profile?.is_verified ? (
                   <span className="flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
@@ -203,15 +207,15 @@ export default function ProfilePage() {
 
         {/* Рейтинги */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Рейтинги</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Рейтинги</p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 mb-1.5">Как пассажир</p>
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3">
+              <p className="text-xs text-gray-400 dark:text-slate-500 mb-1.5">Как пассажир</p>
               <Stars value={profile?.rating_passenger || 5} />
               <p className="text-xs text-gray-400 mt-1">{profile?.total_rides_as_passenger} поездок</p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 mb-1.5">Как водитель</p>
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3">
+              <p className="text-xs text-gray-400 dark:text-slate-500 mb-1.5">Как водитель</p>
               <Stars value={profile?.rating_driver || 5} />
               <p className="text-xs text-gray-400 mt-1">{profile?.total_rides_as_driver} рейсов</p>
             </div>
@@ -220,7 +224,7 @@ export default function ProfilePage() {
 
         {/* Личные данные */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-2">Личные данные</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-2">Личные данные</p>
           <EditableField
             label="Имя и фамилия"
             value={profile?.full_name || ''}
@@ -272,19 +276,77 @@ export default function ProfilePage() {
           )}
         </div>
 
+        {/* ── Активный профиль (роль) ────────────────────────── */}
+        <div className="card p-4">
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Активный профиль</p>
+          <div className="flex items-center bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl">
+            <button
+              onClick={() => setActiveRole('passenger')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                activeRole === 'passenger'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-gray-500 dark:text-slate-400'
+              }`}
+            >
+              👤 Пассажир
+            </button>
+            <button
+              onClick={() => setActiveRole('driver')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                activeRole === 'driver'
+                  ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                  : 'text-gray-500 dark:text-slate-400'
+              }`}
+            >
+              🚗 Водитель
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 text-center">
+            {activeRole === 'passenger'
+              ? 'Главный экран показывает функции пассажира'
+              : 'Главный экран показывает функции водителя'}
+          </p>
+        </div>
+
+        {/* ── Оформление (тема) ──────────────────────────────── */}
+        <div className="card p-4">
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Оформление</p>
+          <div className="flex items-center bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl">
+            {([
+              { key: 'light',  label: '☀️ Светлая' },
+              { key: 'system', label: '⚙️ Системная' },
+              { key: 'dark',   label: '🌙 Тёмная' },
+            ] as const).map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTheme(t.key)}
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  theme === t.key
+                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-gray-500 dark:text-slate-400'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Быстрые ссылки */}
-        <div className="card divide-y divide-gray-50">
+        <div className="card divide-y divide-gray-50 dark:divide-slate-800">
           {[
-            { href: '/passenger/history', icon: Car,      label: 'История поездок' },
+            activeRole === 'passenger'
+              ? { href: '/passenger/history', icon: Car,      label: 'История поездок' }
+              : { href: '/driver/history',    icon: Car,      label: 'История рейсов'  },
             { href: '/market/my',         icon: FileText, label: 'Мои объявления' },
             { href: '/profile/reviews',   icon: Star,     label: 'Мои отзывы' },
           ].map(item => (
             <Link key={item.href} href={item.href}
-              className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
             >
-              <item.icon className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 flex-1">{item.label}</span>
-              <ChevronRight className="w-4 h-4 text-gray-300" />
+              <item.icon className="w-5 h-5 text-gray-400 dark:text-slate-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-slate-200 flex-1">{item.label}</span>
+              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
             </Link>
           ))}
         </div>

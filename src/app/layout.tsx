@@ -3,6 +3,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
+import ThemeProvider from '@/components/ThemeProvider'
 import './globals.css'
 
 const inter = Inter({
@@ -40,7 +41,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className={inter.variable}>
-      <body className="min-h-screen bg-gray-50">
+      <body className="min-h-screen bg-gray-50 dark:bg-slate-950">
+        <ThemeProvider />
         {children}
         <Toaster
           position="top-center"
