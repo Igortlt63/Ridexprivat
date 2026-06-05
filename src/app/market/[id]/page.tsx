@@ -118,25 +118,25 @@ export default function ListingDetailPage() {
       <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent" />
     </div>
   )
-  if (!listing) return <div className="p-8 text-center text-gray-500">Объявление не найдено</div>
+  if (!listing) return <div className="p-8 text-center text-gray-500 dark:text-slate-400">Объявление не найдено</div>
 
   const cat    = listing.category as MarketCategory | undefined
   const author = listing.author   as Profile | undefined
   const photos = listing.images   || []
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-32">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
             <button onClick={toggleFav} className="btn-ghost p-2 rounded-xl">
-              <Heart className={`w-5 h-5 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-gray-400'}`} />
+              <Heart className={`w-5 h-5 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-gray-400 dark:text-slate-500'}`} />
             </button>
             <button onClick={share} className="btn-ghost p-2 rounded-xl">
-              <Share2 className="w-5 h-5 text-gray-400" />
+              <Share2 className="w-5 h-5 text-gray-400 dark:text-slate-500" />
             </button>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default function ListingDetailPage() {
           {/* Заголовок */}
           <div>
             {cat && <span className="badge-gray mb-2 inline-flex">{CATEGORY_ICONS[cat.slug]} {cat.name}</span>}
-            <h1 className="text-xl font-bold text-gray-900">{listing.title}</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{listing.title}</h1>
             <div className="mt-2 flex items-center justify-between flex-wrap gap-2">
               <div>
                 {listing.price_type === 'free' ? (
@@ -185,19 +185,19 @@ export default function ListingDetailPage() {
                 ) : listing.price_type === 'negotiable' ? (
                   <span className="text-xl font-semibold text-gray-600">Договорная</span>
                 ) : listing.price ? (
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
                     {listing.price.toLocaleString('ru-RU')} ₽
                     {PRICE_TYPE_LABELS[listing.price_type] && (
-                      <span className="text-base font-normal text-gray-400">{PRICE_TYPE_LABELS[listing.price_type]}</span>
+                      <span className="text-base font-normal text-gray-400 dark:text-slate-500">{PRICE_TYPE_LABELS[listing.price_type]}</span>
                     )}
                   </span>
                 ) : null}
               </div>
-              <div className="flex items-center gap-1 text-xs text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
                 <Eye className="w-3.5 h-3.5" /> {listing.views_count}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400 dark:text-slate-500">
               {listing.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {listing.city}{listing.address && `, ${listing.address}`}</span>}
               <span>{formatDistanceToNow(new Date(listing.created_at), { addSuffix: true, locale: ru })}</span>
             </div>
@@ -206,7 +206,7 @@ export default function ListingDetailPage() {
           {/* Описание */}
           {listing.description && (
             <div className="card p-4">
-              <p className="font-semibold text-gray-900 mb-2">Описание</p>
+              <p className="font-semibold text-gray-900 dark:text-white mb-2">Описание</p>
               <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{listing.description}</p>
             </div>
           )}
@@ -221,10 +221,10 @@ export default function ListingDetailPage() {
                 }
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">{author.full_name||'Пользователь'}</p>
+                <p className="font-semibold text-gray-900 dark:text-white">{author.full_name||'Пользователь'}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                  <span className="text-xs text-gray-500">{Number(author.rating_passenger).toFixed(1)}</span>
+                  <span className="text-xs text-gray-500 dark:text-slate-400">{Number(author.rating_passenger).toFixed(1)}</span>
                 </div>
               </div>
               {myId === listing.author_id && (
@@ -237,7 +237,7 @@ export default function ListingDetailPage() {
 
       {/* Кнопки — фиксированные снизу */}
       {myId !== listing.author_id && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 py-3 z-20">
           <div className="max-w-lg mx-auto flex gap-3">
             <button onClick={openChat} disabled={chatLoading}
               className="flex-1 btn-secondary py-3 flex items-center justify-center gap-2"

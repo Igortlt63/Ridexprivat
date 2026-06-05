@@ -100,13 +100,13 @@ export default function NewVehiclePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Добавить автомобиль</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Добавить автомобиль</h1>
           </div>
           <button onClick={onSubmit} disabled={saving} className="btn-primary btn-sm">
             {saving ? '...' : 'Сохранить'}
@@ -118,7 +118,7 @@ export default function NewVehiclePage() {
 
         {/* Фото автомобиля */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Фото автомобиля</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Фото автомобиля</p>
           <div className="flex items-center gap-4">
             {preview ? (
               <div className="relative w-24 h-24 flex-shrink-0">
@@ -137,14 +137,14 @@ export default function NewVehiclePage() {
                 onClick={() => fileRef.current?.click()}
                 className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 hover:border-indigo-400 transition-colors flex-shrink-0"
               >
-                <Camera className="w-6 h-6 text-gray-400" />
-                <span className="text-xs text-gray-400">Фото</span>
+                <Camera className="w-6 h-6 text-gray-400 dark:text-slate-500" />
+                <span className="text-xs text-gray-400 dark:text-slate-500">Фото</span>
               </button>
             )}
-            <div className="text-sm text-gray-500">
-              <p className="font-medium text-gray-700">Добавьте фото авто</p>
-              <p className="text-xs mt-1 text-gray-400">Пассажиры увидят его в предложениях</p>
-              <p className="text-xs text-gray-400">JPG, PNG до 5 МБ</p>
+            <div className="text-sm text-gray-500 dark:text-slate-400">
+              <p className="font-medium text-gray-700 dark:text-slate-300">Добавьте фото авто</p>
+              <p className="text-xs mt-1 text-gray-400 dark:text-slate-500">Пассажиры увидят его в предложениях</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">JPG, PNG до 5 МБ</p>
               {!preview && (
                 <button
                   type="button"
@@ -161,7 +161,7 @@ export default function NewVehiclePage() {
 
         {/* Марка и Модель */}
         <div className="card p-4 space-y-4">
-          <p className="font-semibold text-gray-900">Марка и модель</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Марка и модель</p>
 
           {/* Марка */}
           <div>
@@ -175,7 +175,7 @@ export default function NewVehiclePage() {
                 <option value="">Выберите марку...</option>
                 {BRAND_LIST.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500 pointer-events-none" />
             </div>
             {errors.brand && <p className="mt-1 text-xs text-rose-500">{errors.brand}</p>}
           </div>
@@ -188,12 +188,12 @@ export default function NewVehiclePage() {
                 value={model}
                 onChange={e => { setModel(e.target.value); setErrors(er => ({...er, model:''})) }}
                 disabled={!brand}
-                className={`input appearance-none pr-10 disabled:bg-gray-100 disabled:text-gray-400 ${errors.model ? 'input-error' : ''}`}
+                className={`input appearance-none pr-10 disabled:bg-gray-100 disabled:text-gray-400 dark:text-slate-500 ${errors.model ? 'input-error' : ''}`}
               >
                 <option value="">{brand ? 'Выберите модель...' : 'Сначала выберите марку'}</option>
                 {models.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500 pointer-events-none" />
             </div>
             {errors.model && <p className="mt-1 text-xs text-rose-500">{errors.model}</p>}
           </div>
@@ -201,7 +201,7 @@ export default function NewVehiclePage() {
 
         {/* Год, места, номер */}
         <div className="card p-4 space-y-4">
-          <p className="font-semibold text-gray-900">Характеристики</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Характеристики</p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -243,7 +243,7 @@ export default function NewVehiclePage() {
 
         {/* Цвет */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Цвет <span className="text-rose-500">*</span></p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Цвет <span className="text-rose-500">*</span></p>
           <div className="flex flex-wrap gap-2">
             {COLORS.map(c => (
               <button
@@ -253,7 +253,7 @@ export default function NewVehiclePage() {
                 className={`px-3 py-1.5 rounded-full text-sm border-2 transition-all ${
                   color === c
                     ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-medium'
-                    : 'border-gray-200 text-gray-600 hover:border-indigo-200'
+                    : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-indigo-200'
                 }`}
               >{c}</button>
             ))}

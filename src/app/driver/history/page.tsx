@@ -79,13 +79,13 @@ export default function DriverHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">История рейсов</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">История рейсов</h1>
         </div>
       </header>
 
@@ -99,7 +99,7 @@ export default function DriverHistoryPage() {
           ].map(s => (
             <div key={s.label} className="card p-3 text-center">
               <s.icon className="w-5 h-5 text-indigo-400 mx-auto mb-1" />
-              <p className="font-bold text-gray-900 text-sm">{s.value}</p>
+              <p className="font-bold text-gray-900 dark:text-white text-sm">{s.value}</p>
               <p className="text-xs text-gray-400 mt-0.5 leading-tight">{s.label}</p>
             </div>
           ))}
@@ -144,8 +144,8 @@ export default function DriverHistoryPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-                  <span className="font-bold text-gray-900">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-slate-800">
+                  <span className="font-bold text-gray-900 dark:text-white">
                     {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
                   </span>
                   {ride.passenger && (

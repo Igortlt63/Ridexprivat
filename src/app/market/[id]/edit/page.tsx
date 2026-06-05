@@ -190,14 +190,14 @@ export default function EditListingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl" aria-label="Назад">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Редактировать</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Редактировать</h1>
           </div>
           <button onClick={onSubmit} disabled={submitting} className="btn-primary btn-sm">
             {submitting ? '...' : 'Сохранить'}
@@ -209,7 +209,7 @@ export default function EditListingPage() {
 
         {/* Категория */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Категория <span className="text-rose-500">*</span></p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Категория <span className="text-rose-500">*</span></p>
           <div className="grid grid-cols-3 gap-2">
             {categories.map(cat => (
               <button key={cat.id} type="button"
@@ -221,7 +221,7 @@ export default function EditListingPage() {
                 }`}
               >
                 <span className="text-xl">{(cat as { icon?: string }).icon || '📦'}</span>
-                <span className="text-xs font-medium text-gray-700 leading-tight">{cat.name}</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-slate-300 leading-tight">{cat.name}</span>
               </button>
             ))}
           </div>
@@ -229,7 +229,7 @@ export default function EditListingPage() {
 
         {/* Описание */}
         <div className="card p-4 space-y-4">
-          <p className="font-semibold text-gray-900">Описание</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Описание</p>
           <div>
             <label htmlFor="edit-title" className="label">Заголовок <span className="text-rose-500">*</span></label>
             <input id="edit-title" type="text" value={title} onChange={e => setTitle(e.target.value)}
@@ -245,7 +245,7 @@ export default function EditListingPage() {
 
         {/* Цена */}
         <div className="card p-4 space-y-3">
-          <p className="font-semibold text-gray-900">Цена</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Цена</p>
           <div className="grid grid-cols-2 gap-2">
             {PRICE_TYPE_OPTIONS.map(opt => (
               <button key={opt.value} type="button" onClick={() => setPriceType(opt.value)}
@@ -269,7 +269,7 @@ export default function EditListingPage() {
 
         {/* Статус */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Статус объявления</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Статус объявления</p>
           <div className="grid grid-cols-2 gap-2">
             {([
               { v: 'active',   l: '✅ Активно' },
@@ -287,7 +287,7 @@ export default function EditListingPage() {
 
         {/* Фото */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Фотографии</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Фотографии</p>
           <div className="flex flex-wrap gap-2">
             {/* Существующие фото */}
             {existingImages.map((url, i) => (
@@ -329,7 +329,7 @@ export default function EditListingPage() {
 
         {/* Местоположение */}
         <div className="card p-4 space-y-3">
-          <p className="font-semibold text-gray-900">Местоположение</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Местоположение</p>
           <div>
             <label htmlFor="edit-city" className="label">Город <span className="text-rose-500">*</span></label>
             <input id="edit-city" type="text" value={city} onChange={e => setCity(e.target.value)}
@@ -344,7 +344,7 @@ export default function EditListingPage() {
 
         {/* Контакты */}
         <div className="card p-4 space-y-3">
-          <p className="font-semibold text-gray-900">Контакты</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Контакты</p>
           <div>
             <label htmlFor="edit-name" className="label">Имя <span className="text-rose-500">*</span></label>
             <input id="edit-name" type="text" value={contactName} onChange={e => setContactName(e.target.value)}

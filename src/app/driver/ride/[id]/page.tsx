@@ -322,14 +322,14 @@ export default function DriverRidePage() {
           />
           {/* Оверлей с адресом назначения */}
           <div className="absolute bottom-4 left-4 right-4 z-10 pointer-events-none">
-            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-xl">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-2xl p-3 shadow-xl">
               <div className="flex items-center gap-2">
                 <Navigation className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-400">
                     {isAccepted ? 'Едете к точке посадки' : 'Едете к пункту назначения'}
                   </p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                     {isAccepted ? ride.origin_address : ride.dest_address}
                   </p>
                 </div>
@@ -341,7 +341,7 @@ export default function DriverRidePage() {
 
       {/* Чат */}
       {tab === 'chat' && (
-        <div className="flex-shrink-0 flex flex-col bg-gray-50" style={{ height: MAP_HEIGHT }}>
+        <div className="flex-shrink-0 flex flex-col bg-gray-50 dark:bg-slate-950" style={{ height: MAP_HEIGHT }}>
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             {messages.length === 0
               ? <p className="text-center text-sm text-gray-400 py-8">Напишите пассажиру</p>
@@ -357,7 +357,7 @@ export default function DriverRidePage() {
             }
             <div ref={chatEndRef} />
           </div>
-          <div className="bg-white border-t border-gray-200 px-4 py-3 flex gap-2">
+          <div className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-4 py-3 flex gap-2">
             <input value={chatMsg} onChange={e => setChatMsg(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder="Пишите пассажиру..." className="input py-2 flex-1" />

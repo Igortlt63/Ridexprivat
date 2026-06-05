@@ -45,12 +45,12 @@ export default function OfferModal({ ride, myId, vehicleId, onClose }: Props) {
       className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl">
-        <h3 className="font-bold text-lg text-gray-900 mb-4">Предложить цену</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 shadow-2xl">
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">Предложить цену</h3>
 
-        <div className="mb-3 p-3 bg-gray-50 rounded-xl">
-          <p className="text-xs text-gray-400 mb-0.5">Цена пассажира</p>
-          <p className="font-bold text-gray-900">
+        <div className="mb-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
+          <p className="text-xs text-gray-400 dark:text-slate-500 mb-0.5">Цена пассажира</p>
+          <p className="font-bold text-gray-900 dark:text-white">
             {ride.passenger_price.toLocaleString('ru-RU')} ₽
           </p>
         </div>

@@ -16,7 +16,7 @@ export default function ReviewBlock({ targetLabel, onSubmit }: Props) {
   const [sending, setSending] = useState(false)
 
   if (sent) return (
-    <div className="card p-4 text-center bg-green-50">
+    <div className="card p-4 text-center bg-green-50 dark:bg-green-900/30">
       <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-1" />
       <p className="text-sm font-medium text-green-700">Отзыв отправлен!</p>
     </div>
@@ -24,7 +24,7 @@ export default function ReviewBlock({ targetLabel, onSubmit }: Props) {
 
   return (
     <div className="card p-4 space-y-3">
-      <p className="font-semibold text-gray-900">Оцените {targetLabel}</p>
+      <p className="font-semibold text-gray-900 dark:text-white">Оцените {targetLabel}</p>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map(i => (
           <button key={i} type="button" onClick={() => setRating(i)}

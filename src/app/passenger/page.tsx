@@ -95,24 +95,24 @@ export default function PassengerPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="btn-ghost p-2 rounded-xl">
               <ChevronLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Пассажир</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Пассажир</h1>
               {profile && (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-slate-400">
                       {Number(profile.rating_passenger).toFixed(1)} · {profile.total_rides_as_passenger} поездок
                     </span>
                   </div>
-                  <span className="text-gray-300">·</span>
+                  <span className="text-gray-300 dark:text-slate-600">·</span>
                   <LiveIndicator />
                 </div>
               )}
@@ -139,7 +139,7 @@ export default function PassengerPage() {
         {/* Активные заявки */}
         {activeRides.length > 0 && (
           <section>
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+            <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-3">
               Активные заявки
             </h2>
             <div className="space-y-3">
@@ -158,21 +158,21 @@ export default function PassengerPage() {
                           )}
                         </div>
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
                             <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
                             <span className="truncate">{ride.origin_address}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                             <div className="w-2 h-2 bg-rose-500 rounded-full flex-shrink-0" />
                             <span className="truncate">{ride.dest_address}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="font-bold text-gray-900">
+                        <p className="font-bold text-gray-900 dark:text-white">
                           {ride.passenger_price.toLocaleString('ru-RU')} ₽
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                           {formatDistanceToNow(new Date(ride.created_at), { addSuffix: true, locale: ru })}
                         </p>
                       </div>
@@ -186,8 +186,8 @@ export default function PassengerPage() {
 
         {/* Быстрые действия */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Разделы</h2>
-          <div className="card divide-y divide-gray-50">
+          <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-3">Разделы</h2>
+          <div className="card divide-y divide-gray-50 dark:divide-slate-800">
             {[
               { href: '/passenger/history', icon: Clock,         label: 'История поездок',       sub: 'Все ваши поездки' },
               { href: '/passenger/routes',  icon: MapPin,        label: 'Сохранённые маршруты',  sub: 'Быстрый доступ к маршрутам' },
@@ -195,16 +195,16 @@ export default function PassengerPage() {
               { href: '/passenger/support', icon: AlertCircle,   label: 'Поддержка',             sub: 'Помощь и FAQ' },
             ].map(item => (
               <Link key={item.href} href={item.href}
-                className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
               >
-                <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <item.icon className="w-4 h-4 text-gray-500" />
+                <div className="w-9 h-9 bg-gray-100 dark:bg-slate-800 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <item.icon className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-800">{item.label}</p>
-                  <p className="text-xs text-gray-400">{item.sub}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-slate-100">{item.label}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">{item.sub}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-300" />
+                <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
               </Link>
             ))}
           </div>

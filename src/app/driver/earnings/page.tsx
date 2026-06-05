@@ -69,19 +69,19 @@ export default function EarningsPage() {
   const maxAmount = Math.max(...stats.byDay.map(d => d.amount), 1)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Мой заработок</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Мой заработок</h1>
         </div>
       </header>
 
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         {/* Переключатель периода */}
-        <div className="flex gap-1.5 bg-white rounded-2xl p-1.5 border border-gray-100">
+        <div className="flex gap-1.5 bg-white dark:bg-slate-900 rounded-2xl p-1.5 border border-gray-100 dark:border-slate-800">
           {([
             { key: 'day',   label: 'Сегодня' },
             { key: 'week',  label: 'Неделя' },
@@ -117,7 +117,7 @@ export default function EarningsPage() {
               ].map(s => (
                 <div key={s.label} className="card p-3 text-center">
                   <s.icon className="w-5 h-5 text-indigo-400 mx-auto mb-1" />
-                  <p className="font-bold text-gray-900 text-sm">{s.value}</p>
+                  <p className="font-bold text-gray-900 dark:text-white text-sm">{s.value}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
                 </div>
               ))}
@@ -126,7 +126,7 @@ export default function EarningsPage() {
             {/* Мини-график */}
             {stats.byDay.length > 0 && (
               <div className="card p-4">
-                <p className="font-semibold text-gray-900 mb-4 text-sm">По дням</p>
+                <p className="font-semibold text-gray-900 dark:text-white mb-4 text-sm">По дням</p>
                 <div className="flex items-end gap-1.5 h-24">
                   {stats.byDay.map(d => (
                     <div key={d.date} className="flex-1 flex flex-col items-center gap-1">

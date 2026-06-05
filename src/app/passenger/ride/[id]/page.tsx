@@ -288,7 +288,7 @@ export default function RideDetailPage() {
         <header className="bg-gray-900 border-b border-gray-800 px-4 py-3 flex-shrink-0">
           <div className="max-w-lg mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={() => router.replace('/passenger')} className="p-2 text-gray-400">
+              <button onClick={() => router.replace('/passenger')} className="p-2 text-gray-400 dark:text-slate-500">
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <div>
@@ -298,7 +298,7 @@ export default function RideDetailPage() {
                     {ride.status === 'accepted' ? 'Водитель едет к вам' : 'Вы в пути!'}
                   </p>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                   {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
                 </p>
               </div>
@@ -334,7 +334,7 @@ export default function RideDetailPage() {
                 <p className="font-semibold text-white text-sm">{driver.full_name}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                  <span className="text-xs text-gray-400">{Number(driver.rating_driver || 5).toFixed(1)}</span>
+                  <span className="text-xs text-gray-400 dark:text-slate-500">{Number(driver.rating_driver || 5).toFixed(1)}</span>
                   {driver.is_verified && (
                     <span className="flex items-center gap-0.5 text-xs text-green-400">
                       <Shield className="w-3 h-3" /> Проверен
@@ -344,7 +344,7 @@ export default function RideDetailPage() {
               </div>
               {/* Маршрут */}
               <div className="text-right max-w-32">
-                <p className="text-xs text-gray-400">Куда</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Куда</p>
                 <p className="text-xs text-white truncate">{ride.dest_address}</p>
               </div>
             </div>
@@ -360,7 +360,7 @@ export default function RideDetailPage() {
             ] as const).map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
                 className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                  tab === t.key ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+                  tab === t.key ? 'bg-indigo-600 text-white' : 'text-gray-400 dark:text-slate-500 hover:text-white'
                 }`}>
                 {t.label}
               </button>
@@ -386,8 +386,8 @@ export default function RideDetailPage() {
             />
             {/* Адрес поверх карты */}
             <div className="absolute bottom-4 left-4 right-4 z-10">
-              <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-xl">
-                <p className="text-xs text-gray-400 mb-0.5">
+              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-2xl p-3 shadow-xl">
+                <p className="text-xs text-gray-400 dark:text-slate-500 mb-0.5">
                   {ride.status === 'accepted' ? '📍 Водитель едет к точке посадки' : '🏁 Маршрут'}
                 </p>
                 <div className="flex items-center gap-2 text-sm">
@@ -405,21 +405,21 @@ export default function RideDetailPage() {
 
         {/* Чат */}
         {tab === 'chat' && (
-          <div className="flex-1 flex flex-col min-h-0 bg-gray-50">
+          <div className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-slate-950">
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
               {messages.length === 0
-                ? <p className="text-center text-sm text-gray-400 py-8">Напишите водителю</p>
+                ? <p className="text-center text-sm text-gray-400 dark:text-slate-500 py-8">Напишите водителю</p>
                 : messages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.sender_id === myId ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-xs px-3 py-2 rounded-xl text-sm ${
-                      msg.sender_id === myId ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800 border border-gray-100'
+                      msg.sender_id === myId ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 border border-gray-100 dark:border-slate-700'
                     }`}>{msg.message}</div>
                   </div>
                 ))
               }
               <div ref={chatEndRef} />
             </div>
-            <div className="bg-white border-t border-gray-100 px-4 py-3 flex gap-2 flex-shrink-0">
+            <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 py-3 flex gap-2 flex-shrink-0">
               <input value={chatMsg} onChange={e => setChatMsg(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendMessage()}
                 placeholder="Сообщение водителю..." className="input py-2 flex-1" />
@@ -435,13 +435,13 @@ export default function RideDetailPage() {
 
   // ── Обычный экран (поиск, торг, завершена, отменена) ───────────
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.replace('/passenger')} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Поездка</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Поездка</h1>
         </div>
       </header>
 
@@ -457,7 +457,7 @@ export default function RideDetailPage() {
           <div className="flex-1">
             <p className={`font-semibold ${si.color}`}>{si.label}</p>
             {ride.status === 'searching' && (
-              <p className="text-xs text-gray-500 mt-0.5">Водители видят вашу заявку</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Водители видят вашу заявку</p>
             )}
           </div>
           {/* Таймер ожидания водителя */}
@@ -483,12 +483,12 @@ export default function RideDetailPage() {
             </div>
           </div>
           <div className="flex justify-between pt-2 border-t border-gray-100">
-            <span className="text-xs text-gray-400">Ваша цена</span>
+            <span className="text-xs text-gray-400 dark:text-slate-500">Ваша цена</span>
             <span className="font-bold">{ride.passenger_price.toLocaleString('ru-RU')} ₽</span>
           </div>
           {ride.final_price && ride.final_price !== ride.passenger_price && (
             <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-400">Итого</span>
+              <span className="text-xs text-gray-400 dark:text-slate-500">Итого</span>
               <span className="font-bold text-green-700">{ride.final_price.toLocaleString('ru-RU')} ₽</span>
             </div>
           )}
@@ -497,14 +497,14 @@ export default function RideDetailPage() {
         {/* Предложения */}
         {['searching', 'negotiating'].includes(ride.status) && (
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-2">
               Предложения {offers.length > 0 && `(${offers.length})`}
             </p>
             {offers.length === 0 ? (
               <div className="card p-8 text-center">
                 <Clock className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm">Ожидаем предложений от водителей</p>
-                <p className="text-xs text-gray-400 mt-1">Уведомим как только появятся</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm">Ожидаем предложений от водителей</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Уведомим как только появятся</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -517,14 +517,14 @@ export default function RideDetailPage() {
                       <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
                         {offer.driver?.avatar_url
                           ? <img src={offer.driver.avatar_url} className="w-10 h-10 object-cover" alt="" />
-                          : <Car className="w-5 h-5 text-gray-500" />
+                          : <Car className="w-5 h-5 text-gray-500 dark:text-slate-400" />
                         }
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-sm">{offer.driver?.full_name || 'Водитель'}</p>
                         <div className="flex items-center gap-1">
                           <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-slate-400">
                             {Number(offer.driver?.rating_driver || 5).toFixed(1)}
                           </span>
                         </div>
@@ -551,17 +551,17 @@ export default function RideDetailPage() {
                           />
                         ) : (
                           <div className="w-14 h-14 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Car className="w-7 h-7 text-gray-400" />
+                            <Car className="w-7 h-7 text-gray-400 dark:text-slate-500" />
                           </div>
                         )}
                         <div>
-                          <p className="font-semibold text-sm text-gray-900">
+                          <p className="font-semibold text-sm text-gray-900 dark:text-white">
                             {veh.brand} {veh.model} {veh.year}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                             {veh.color} · {veh.plate_number}
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-gray-400 dark:text-slate-500">
                             {veh.seats_count} мест
                           </p>
                         </div>

@@ -142,16 +142,16 @@ export default function MarketPage() {
   const currentCat = categories.find(c => c.id === selected)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Шапка */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h1 className="text-xl font-bold text-gray-900">Маркет</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Маркет</h1>
             </div>
             <Link href="/market/new" className="btn-primary btn-sm gap-1.5">
               <Plus className="w-4 h-4" /> Подать
@@ -160,7 +160,7 @@ export default function MarketPage() {
 
           {/* Поиск */}
           <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
             <input
               type="search"
               value={search}
@@ -177,7 +177,7 @@ export default function MarketPage() {
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 selected === null
                   ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
               }`}
             >
               Все
@@ -189,7 +189,7 @@ export default function MarketPage() {
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   selected === cat.id
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <span>{CATEGORY_ICONS[cat.slug] || '📦'}</span>
@@ -203,12 +203,12 @@ export default function MarketPage() {
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Заголовок секции */}
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             {currentCat
               ? `${CATEGORY_ICONS[currentCat.slug]} ${currentCat.name}`
               : 'Все объявления'
             }
-            {!loading && <span className="ml-1 text-gray-400">· {listings.length}</span>}
+            {!loading && <span className="ml-1 text-gray-400 dark:text-slate-500">· {listings.length}</span>}
           </p>
         </div>
 
@@ -220,8 +220,8 @@ export default function MarketPage() {
         ) : listings.length === 0 ? (
           <div className="card p-12 text-center">
             <p className="text-2xl mb-2">🔍</p>
-            <p className="text-gray-500 font-medium">Объявлений не найдено</p>
-            <p className="text-xs text-gray-400 mt-1">Попробуйте другую категорию</p>
+            <p className="text-gray-500 dark:text-slate-400 font-medium">Объявлений не найдено</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Попробуйте другую категорию</p>
             <Link href="/market/new" className="btn-primary btn-sm mt-4 inline-flex">
               Подать первым
             </Link>
@@ -268,7 +268,7 @@ export default function MarketPage() {
             if (groupEntries.length === 0) return (
               <div className="card p-12 text-center">
                 <p className="text-2xl mb-2">🔍</p>
-                <p className="text-gray-500 font-medium">Объявлений не найдено</p>
+                <p className="text-gray-500 dark:text-slate-400 font-medium">Объявлений не найдено</p>
               </div>
             )
 
@@ -282,7 +282,7 @@ export default function MarketPage() {
                         <h2 className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
                           <span>{CATEGORY_ICONS[group.slug] || '📦'}</span>
                           <span>{group.name}</span>
-                          <span className="text-gray-400 font-normal">({group.items.length})</span>
+                          <span className="text-gray-400 dark:text-slate-500 font-normal">({group.items.length})</span>
                         </h2>
                         <button
                           onClick={() => selectCategory(cid)}
@@ -345,7 +345,7 @@ function ListingCard({ listing }: { listing: MarketListing & { category?: Market
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
+            <p className="font-semibold text-gray-900 dark:text-white text-sm leading-tight line-clamp-2">
               {listing.title}
             </p>
             {listing.is_promoted && (
@@ -360,21 +360,21 @@ function ListingCard({ listing }: { listing: MarketListing & { category?: Market
             ) : listing.price_type === 'negotiable' ? (
               <span className="text-gray-600 text-sm">Договорная</span>
             ) : listing.price ? (
-              <span className="font-bold text-gray-900">
+              <span className="font-bold text-gray-900 dark:text-white">
                 {listing.price.toLocaleString('ru-RU')} ₽
                 {PRICE_TYPE_LABELS[listing.price_type] && (
-                  <span className="text-gray-400 font-normal text-xs">
+                  <span className="text-gray-400 dark:text-slate-500 font-normal text-xs">
                     {PRICE_TYPE_LABELS[listing.price_type]}
                   </span>
                 )}
               </span>
             ) : (
-              <span className="text-gray-400 text-sm">Цена не указана</span>
+              <span className="text-gray-400 dark:text-slate-500 text-sm">Цена не указана</span>
             )}
           </div>
 
           {/* Мета */}
-          <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+          <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400 dark:text-slate-500">
             {listing.city && (
               <span className="flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" /> {listing.city}

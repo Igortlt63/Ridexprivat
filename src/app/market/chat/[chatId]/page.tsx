@@ -93,18 +93,18 @@ export default function MarketChatPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 text-sm truncate">
+            <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
               {interlocutor?.full_name || 'Собеседник'}
             </p>
             {chat?.listing && (
-              <p className="text-xs text-gray-400 truncate flex items-center gap-1">
+              <p className="text-xs text-gray-400 dark:text-slate-500 truncate flex items-center gap-1">
                 <ShoppingBag className="w-3 h-3" />
                 {chat.listing.title}
               </p>
@@ -115,7 +115,7 @@ export default function MarketChatPage() {
 
       {/* Объявление */}
       {chat?.listing && (
-        <div className="bg-indigo-50 border-b border-indigo-100 px-4 py-2">
+        <div className="bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-900/50 px-4 py-2">
           <div className="max-w-lg mx-auto flex items-center gap-3">
             {chat.listing.images?.[0] ? (
               <img src={chat.listing.images[0]} className="w-10 h-10 rounded-lg object-cover" alt="" />
@@ -137,7 +137,7 @@ export default function MarketChatPage() {
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-sm">Начните переписку</p>
+            <p className="text-gray-400 dark:text-slate-500 text-sm">Начните переписку</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -148,10 +148,10 @@ export default function MarketChatPage() {
                   <div className={`max-w-xs px-3 py-2 rounded-2xl text-sm ${
                     isMine
                       ? 'bg-indigo-600 text-white rounded-br-sm'
-                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
+                      : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 border border-gray-100 dark:border-slate-700 rounded-bl-sm'
                   }`}>
                     <p>{msg.message}</p>
-                    <p className={`text-xs mt-0.5 ${isMine ? 'text-indigo-200' : 'text-gray-400'}`}>
+                    <p className={`text-xs mt-0.5 ${isMine ? 'text-indigo-200' : 'text-gray-400 dark:text-slate-500'}`}>
                       {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ru })}
                     </p>
                   </div>
@@ -164,7 +164,7 @@ export default function MarketChatPage() {
       </div>
 
       {/* Поле ввода */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3">
+      <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 py-3">
         <div className="max-w-lg mx-auto flex gap-2">
           <input
             value={text}

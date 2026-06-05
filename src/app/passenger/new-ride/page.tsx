@@ -114,7 +114,7 @@ function AddressInput({
         )}
       </div>
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
           {suggestions.map((s, i) => (
             <li key={i}>
               <button
@@ -240,13 +240,13 @@ export default function NewRidePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Новая заявка</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Новая заявка</h1>
         </div>
         {/* Шаги */}
         <div className="max-w-lg mx-auto px-4 pb-3 flex gap-2">
@@ -266,7 +266,7 @@ export default function NewRidePage() {
                 step === s.key ? 'bg-indigo-600 text-white'
                 : (s.key === 'dest' && !hasOrigin) || (s.key === 'details' && !hasDest)
                 ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                : 'bg-gray-100 text-gray-600 hover:bg-indigo-50'
+                : 'bg-gray-100 text-gray-600 dark:text-slate-400 hover:bg-indigo-50'
               }`}
             >{s.label}</button>
           ))}
@@ -281,24 +281,24 @@ export default function NewRidePage() {
             {/* Переключатель карта/текст */}
             <div className="flex gap-2 px-4 pt-3">
               <button onClick={() => setMapMode(true)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${mapMode ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${mapMode ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400'}`}>
                 На карте
               </button>
               <button onClick={() => setMapMode(false)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${!mapMode ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${!mapMode ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400'}`}>
                 Вручную
               </button>
             </div>
 
             {mapMode ? (
               <>
-                <div className="px-4 py-2.5 bg-blue-50 mx-4 mt-3 rounded-xl">
+                <div className="px-4 py-2.5 bg-blue-50 dark:bg-blue-900/30 mx-4 mt-3 rounded-xl">
                   <p className="text-sm text-blue-700 font-medium">Нажмите на карту — откуда ехать</p>
                   {hasOrigin && <p className="text-xs text-blue-600 mt-0.5 truncate">✓ {originAddress}</p>}
                 </div>
                 <div className="px-4 mt-2">
                   <button onClick={detectMyLocation} disabled={geoLoading}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors mb-2">
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-50 transition-colors mb-2">
                     {geoLoading
                       ? <span className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-400 border-t-transparent" />
                       : <Crosshair className="w-4 h-4 text-indigo-500" />
@@ -346,18 +346,18 @@ export default function NewRidePage() {
           <div>
             <div className="flex gap-2 px-4 pt-3">
               <button onClick={() => setMapMode(true)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${mapMode ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${mapMode ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400'}`}>
                 На карте
               </button>
               <button onClick={() => setMapMode(false)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${!mapMode ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${!mapMode ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400'}`}>
                 Вручную
               </button>
             </div>
 
             {mapMode ? (
               <>
-                <div className="px-4 py-2.5 bg-rose-50 mx-4 mt-3 rounded-xl">
+                <div className="px-4 py-2.5 bg-rose-50 dark:bg-rose-900/30 mx-4 mt-3 rounded-xl">
                   <p className="text-sm text-rose-700 font-medium">Нажмите на карту — куда ехать</p>
                   {hasDest && <p className="text-xs text-rose-600 mt-0.5 truncate">✓ {destAddress}</p>}
                 </div>
@@ -381,12 +381,12 @@ export default function NewRidePage() {
             {hasDest && (
               <div className="px-4 py-3 space-y-2">
                 <div className="card p-3">
-                  <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-slate-400 mb-1">
                     <div className="w-2 h-2 bg-green-500 rounded-full" />
                     <span className="truncate">{originAddress}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
-                    <div className="w-2 h-2 bg-rose-500 rounded-full" />
+                  <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-slate-400">
+                    <div className="w-2 h-2 bg-rose-50 dark:bg-rose-900/300 rounded-full" />
                     <span className="truncate">{destAddress}</span>
                   </div>
                 </div>
@@ -417,7 +417,7 @@ export default function NewRidePage() {
                   <span className="truncate">{originAddress}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <div className="w-2 h-2 bg-rose-500 rounded-full flex-shrink-0" />
+                  <div className="w-2 h-2 bg-rose-50 dark:bg-rose-900/300 rounded-full flex-shrink-0" />
                   <span className="truncate">{destAddress}</span>
                 </div>
               </div>
@@ -433,7 +433,7 @@ export default function NewRidePage() {
                 {([{v:'city',l:'🏙 По городу'},{v:'intercity',l:'🛣 Межгород'}] as const).map(t => (
                   <button key={t.v} type="button" onClick={() => setRideType(t.v)}
                     className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      rideType === t.v ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      rideType === t.v ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 hover:bg-gray-200'
                     }`}>{t.l}</button>
                 ))}
               </div>
@@ -462,7 +462,7 @@ export default function NewRidePage() {
 
             {/* Пожелания */}
             <div className="card p-4 space-y-3">
-              <p className="font-semibold text-gray-900">Пожелания</p>
+              <p className="font-semibold text-gray-900 dark:text-white">Пожелания</p>
               {[
                 { state: luggage,   setter: setLuggage,   Icon: Luggage,      label: 'Есть багаж' },
                 { state: pets,      setter: setPets,       Icon: PawPrint,     label: 'С животным' },

@@ -87,13 +87,13 @@ export default function HistoryPage() {
   const filtered = rides // фильтрация теперь на сервере
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">История поездок</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">История поездок</h1>
         </div>
       </header>
 
@@ -107,7 +107,7 @@ export default function HistoryPage() {
           ]).map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)}
               className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${
-                filter === f.key ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
+                filter === f.key ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700'
               }`}
             >{f.label}</button>
           ))}
@@ -155,8 +155,8 @@ export default function HistoryPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-                    <span className="font-bold text-gray-900">
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-slate-800">
+                    <span className="font-bold text-gray-900 dark:text-white">
                       {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
                     </span>
                     {ride.driver && (
@@ -181,7 +181,7 @@ export default function HistoryPage() {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="w-full py-3 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="w-full py-3 rounded-xl text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
               >
                 {loadingMore ? 'Загрузка...' : 'Загрузить ещё'}
               </button>

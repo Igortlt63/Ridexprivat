@@ -60,20 +60,20 @@ export default function VehicleEditPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen dark:bg-slate-950 flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent" />
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen dark:bg-slate-950 bg-gray-50">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Редактировать авто</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Редактировать авто</h1>
           </div>
           <button onClick={deleteVehicle} className="btn-ghost p-2 rounded-xl text-rose-500">
             <Trash2 className="w-5 h-5" />

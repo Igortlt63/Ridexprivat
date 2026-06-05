@@ -50,13 +50,13 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Отзывы</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Отзывы</h1>
         </div>
       </header>
 
@@ -65,7 +65,7 @@ export default function ReviewsPage() {
           {(['received', 'given'] as const).map(t => (
             <button key={t} onClick={() => switchTab(t)}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                tab === t ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
+                tab === t ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700'
               }`}
             >
               {t === 'received' ? 'Обо мне' : 'Мои отзывы'}
@@ -80,21 +80,21 @@ export default function ReviewsPage() {
         ) : reviews.length === 0 ? (
           <div className="card p-10 text-center">
             <Star className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-500">Отзывов пока нет</p>
+            <p className="text-gray-500 dark:text-slate-400">Отзывов пока нет</p>
           </div>
         ) : (
           <div className="space-y-3">
             {reviews.map(r => (
               <div key={r.id} className="card p-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-bold text-indigo-600">
                       {r.reviewer?.full_name?.[0] || '?'}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">{r.reviewer?.full_name || 'Пользователь'}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.reviewer?.full_name || 'Пользователь'}</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500">
                       {formatDistanceToNow(new Date(r.created_at), { addSuffix: true, locale: ru })}
                     </p>
                   </div>

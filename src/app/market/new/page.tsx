@@ -167,14 +167,14 @@ export default function NewListingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Новое объявление</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Новое объявление</h1>
           </div>
           <button onClick={onSubmit} disabled={submitting} className="btn-primary btn-sm">
             {submitting ? '...' : 'Опубликовать'}
@@ -186,7 +186,7 @@ export default function NewListingPage() {
 
         {/* Категория — всегда показываем, не ждём загрузки */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">
             Категория <span className="text-rose-500">*</span>
           </p>
           <div className="grid grid-cols-3 gap-2">
@@ -202,7 +202,7 @@ export default function NewListingPage() {
                 }`}
               >
                 <span className="text-xl">{(cat as { icon?: string }).icon || '📦'}</span>
-                <span className="text-xs font-medium text-gray-700 leading-tight">{cat.name}</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-slate-300 leading-tight">{cat.name}</span>
               </button>
             ))}
           </div>
@@ -211,7 +211,7 @@ export default function NewListingPage() {
 
         {/* Описание */}
         <div className="card p-4 space-y-4">
-          <p className="font-semibold text-gray-900">Описание</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Описание</p>
           <div>
             <label className="label">Заголовок <span className="text-rose-500">*</span></label>
             <input
@@ -232,14 +232,14 @@ export default function NewListingPage() {
 
         {/* Цена */}
         <div className="card p-4 space-y-3">
-          <p className="font-semibold text-gray-900">Цена</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Цена</p>
           <div className="grid grid-cols-2 gap-2">
             {PRICE_TYPE_OPTIONS.map(opt => (
               <button key={opt.value} type="button" onClick={() => setPriceType(opt.value)}
                 className={`py-2 rounded-xl text-sm font-medium border-2 transition-all ${
                   priceType === opt.value
                     ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-100 text-gray-600 hover:border-gray-200'
+                    : 'border-gray-100 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-gray-200'
                 }`}
               >{opt.label}</button>
             ))}
@@ -259,7 +259,7 @@ export default function NewListingPage() {
 
         {/* Фото */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Фотографии</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Фотографии</p>
           <div className="flex flex-wrap gap-2">
             {previews.map((src, i) => (
               <div key={i} className="relative w-20 h-20">
@@ -277,18 +277,18 @@ export default function NewListingPage() {
             ))}
             {images.length < 8 && (
               <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-indigo-400 transition-colors">
-                <Camera className="w-5 h-5 text-gray-400" />
-                <span className="text-xs text-gray-400">Фото</span>
+                <Camera className="w-5 h-5 text-gray-400 dark:text-slate-500" />
+                <span className="text-xs text-gray-400 dark:text-slate-500">Фото</span>
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
               </label>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-2">До 8 фото · Первое — главное</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">До 8 фото · Первое — главное</p>
         </div>
 
         {/* Местоположение */}
         <div className="card p-4 space-y-3">
-          <p className="font-semibold text-gray-900">Местоположение</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Местоположение</p>
           <div>
             <label className="label">Город <span className="text-rose-500">*</span></label>
             <input type="text" value={city} onChange={e => setCity(e.target.value)}
@@ -306,7 +306,7 @@ export default function NewListingPage() {
 
         {/* Контакты */}
         <div className="card p-4 space-y-3">
-          <p className="font-semibold text-gray-900">Контакты</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Контакты</p>
           <div>
             <label className="label">Имя <span className="text-rose-500">*</span></label>
             <input type="text" value={contactName} onChange={e => setContactName(e.target.value)}
@@ -333,7 +333,7 @@ export default function NewListingPage() {
             </span>
           ) : '📢 Опубликовать объявление'}
         </button>
-        <p className="text-center text-xs text-gray-400 pb-4">Объявление будет активно 30 дней</p>
+        <p className="text-center text-xs text-gray-400 dark:text-slate-500 pb-4">Объявление будет активно 30 дней</p>
       </div>
     </div>
   )

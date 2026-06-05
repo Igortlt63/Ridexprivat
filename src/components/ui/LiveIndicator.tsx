@@ -37,7 +37,7 @@ export default function LiveIndicator() {
   )
 
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+    <span className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
       <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-pulse" />
       Подключаемся...
     </span>

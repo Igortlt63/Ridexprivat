@@ -165,8 +165,8 @@ export default function DriverPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-3">
@@ -174,12 +174,12 @@ export default function DriverPage() {
                 <ChevronLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Водитель</h1>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Водитель</h1>
                 {profile && (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                       <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-slate-400">
                         {Number(profile.rating_driver).toFixed(1)} · {profile.total_rides_as_driver} рейсов
                       </span>
                     </div>
@@ -200,7 +200,7 @@ export default function DriverPage() {
           <button
             onClick={toggleOnline}
             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${
-              isOnline ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-100 hover:bg-gray-200'
+              isOnline ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30' : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700'
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -212,13 +212,13 @@ export default function DriverPage() {
               ) : (
                 <>
                   <div className="w-2.5 h-2.5 bg-gray-400 rounded-full" />
-                  <span className="text-sm font-medium text-gray-500">Офлайн — нажмите чтобы включить</span>
+                  <span className="text-sm font-medium text-gray-500 dark:text-slate-400">Офлайн — нажмите чтобы включить</span>
                 </>
               )}
             </div>
             {isOnline
               ? <ToggleRight className="w-8 h-8 text-green-600 flex-shrink-0" />
-              : <ToggleLeft  className="w-8 h-8 text-gray-400 flex-shrink-0" />
+              : <ToggleLeft  className="w-8 h-8 text-gray-400 dark:text-slate-500 flex-shrink-0" />
             }
           </button>
           {geoError && <p className="text-xs text-rose-500 mt-1.5 px-1">{geoError}</p>}
@@ -268,7 +268,7 @@ export default function DriverPage() {
         {vehicles.length === 0 && (
           <div className="card p-4 border-l-4 border-amber-400">
             <p className="font-semibold text-amber-700 text-sm">Добавьте автомобиль</p>
-            <p className="text-xs text-gray-500 mt-0.5 mb-2">Без авто вы не можете принимать заказы</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 mb-2">Без авто вы не можете принимать заказы</p>
             <Link href="/profile/vehicle/new" className="btn-primary btn-sm inline-flex">
               Добавить авто →
             </Link>
@@ -279,13 +279,13 @@ export default function DriverPage() {
         <div className="flex gap-2">
           <button onClick={() => setView('list')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              view === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
+              view === 'list' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700'
             }`}>
             <List className="w-4 h-4" /> Список ({rides.length})
           </button>
           <button onClick={() => setView('map')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              view === 'map' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
+              view === 'map' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700'
             }`}>
             <Map className="w-4 h-4" /> Карта
           </button>
@@ -300,8 +300,8 @@ export default function DriverPage() {
           ) : (
             <div className="card p-8 text-center">
               <Navigation className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">Включите онлайн-режим</p>
-              <p className="text-xs text-gray-400 mt-1">Для карты нужна геолокация</p>
+              <p className="text-gray-500 dark:text-slate-400 font-medium">Включите онлайн-режим</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Для карты нужна геолокация</p>
             </div>
           )
         )}
@@ -311,8 +311,8 @@ export default function DriverPage() {
           rides.length === 0 ? (
             <div className="card p-10 text-center">
               <Clock className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">Новых заявок нет</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-gray-500 dark:text-slate-400 font-medium">Новых заявок нет</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                 {isOnline ? 'Ожидаем заявки поблизости...' : 'Включите онлайн-режим чтобы видеть заказы'}
               </p>
             </div>

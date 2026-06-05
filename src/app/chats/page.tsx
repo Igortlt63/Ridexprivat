@@ -47,13 +47,13 @@ export default function ChatsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Сообщения</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Сообщения</h1>
         </div>
       </header>
 
@@ -61,14 +61,14 @@ export default function ChatsPage() {
         <div className="flex gap-2 mb-4">
           <button onClick={() => setTab('market')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              tab === 'market' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
+              tab === 'market' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700'
             }`}
           >
             <ShoppingBag className="w-4 h-4" /> Маркет
           </button>
           <button onClick={() => setTab('rides')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              tab === 'rides' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
+              tab === 'rides' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700'
             }`}
           >
             <Car className="w-4 h-4" /> Поездки
@@ -83,7 +83,7 @@ export default function ChatsPage() {
           marketChats.length === 0 ? (
             <div className="card p-10 text-center">
               <MessageSquare className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-500">Нет сообщений в маркете</p>
+              <p className="text-gray-500 dark:text-slate-400">Нет сообщений в маркете</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -100,13 +100,13 @@ export default function ChatsPage() {
                       }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm">{other?.full_name || 'Пользователь'}</p>
-                      <p className="text-xs text-gray-400 truncate">{chat.listing?.title}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{other?.full_name || 'Пользователь'}</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{chat.listing?.title}</p>
                       {chat.last_message && (
-                        <p className="text-xs text-gray-500 truncate mt-0.5">{chat.last_message}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">{chat.last_message}</p>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 flex-shrink-0">
+                    <p className="text-xs text-gray-400 dark:text-slate-500 flex-shrink-0">
                       {formatDistanceToNow(new Date(chat.last_message_at), { addSuffix: true, locale: ru })}
                     </p>
                   </Link>
@@ -118,7 +118,7 @@ export default function ChatsPage() {
           rideChats.length === 0 ? (
             <div className="card p-10 text-center">
               <Car className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-500">Нет активных поездок</p>
+              <p className="text-gray-500 dark:text-slate-400">Нет активных поездок</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -132,8 +132,8 @@ export default function ChatsPage() {
                       <Car className="w-6 h-6 text-green-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm">{other?.full_name || 'Участник'}</p>
-                      <p className="text-xs text-gray-400 truncate">{ride.origin_address} → {ride.dest_address}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{other?.full_name || 'Участник'}</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{ride.origin_address} → {ride.dest_address}</p>
                       <p className="text-xs font-semibold text-indigo-600 mt-0.5">
                         {(ride.final_price || ride.passenger_price).toLocaleString('ru-RU')} ₽
                       </p>

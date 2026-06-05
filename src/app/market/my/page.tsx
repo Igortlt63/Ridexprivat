@@ -14,7 +14,7 @@ type FilterStatus = ListingStatus | 'all'
 
 const STATUS_LABEL: Record<ListingStatus, { label: string; color: string; bg: string }> = {
   active:      { label: 'Активно',       color: 'text-green-700',  bg: 'bg-green-50' },
-  inactive:    { label: 'Скрыто',        color: 'text-gray-500',   bg: 'bg-gray-100' },
+  inactive:    { label: 'Скрыто',        color: 'text-gray-500 dark:text-slate-400',   bg: 'bg-gray-100' },
   sold:        { label: 'Продано',       color: 'text-blue-700',   bg: 'bg-blue-50'  },
   moderation:  { label: 'На проверке',   color: 'text-amber-700',  bg: 'bg-amber-50' },
 }
@@ -72,14 +72,14 @@ export default function MyListingsPage() {
     : listings.filter(l => l.status === filter)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl" aria-label="Назад">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Мои объявления</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Мои объявления</h1>
           </div>
           <Link href="/market/new" className="btn-primary btn-sm gap-1.5">
             <Plus className="w-4 h-4" /> Новое
@@ -119,7 +119,7 @@ export default function MyListingsPage() {
         ) : displayed.length === 0 ? (
           <div className="card p-10 text-center">
             <p className="text-2xl mb-2">📭</p>
-            <p className="text-gray-500 font-medium">
+            <p className="text-gray-500 dark:text-slate-400 font-medium">
               {filter === 'all' ? 'У вас пока нет объявлений' : 'Нет объявлений с таким статусом'}
             </p>
             {filter === 'all' && (
@@ -150,7 +150,7 @@ export default function MyListingsPage() {
                     )}
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 line-clamp-1">{listing.title}</p>
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1">{listing.title}</p>
                       {/* Цена */}
                       <p className="text-sm font-bold text-gray-800 mt-0.5">
                         {listing.price_type === 'free' ? 'Бесплатно'
@@ -159,7 +159,7 @@ export default function MyListingsPage() {
                         }
                       </p>
                       {/* Мета */}
-                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-400 flex-wrap">
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-400 dark:text-slate-500 flex-wrap">
                         {listing.city && (
                           <span className="flex items-center gap-0.5">
                             <MapPin className="w-3 h-3" /> {listing.city}
@@ -174,7 +174,7 @@ export default function MyListingsPage() {
                   </div>
 
                   {/* Статус + действия */}
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50 dark:border-slate-800">
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${st.bg} ${st.color}`}>
                       {st.label}
                     </span>
@@ -183,7 +183,7 @@ export default function MyListingsPage() {
                       {(listing.status === 'active' || listing.status === 'inactive') && (
                         <button
                           onClick={() => toggleStatus(listing)}
-                          className="text-xs px-2.5 py-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                          className="text-xs px-2.5 py-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 transition-colors"
                         >
                           {listing.status === 'active' ? 'Скрыть' : 'Опубликовать'}
                         </button>
@@ -198,7 +198,7 @@ export default function MyListingsPage() {
                       <button
                         onClick={() => deleteListing(listing.id)}
                         disabled={deleting === listing.id}
-                        className="p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
+                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
                         aria-label="Удалить объявление"
                       >
                         {deleting === listing.id

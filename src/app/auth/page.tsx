@@ -136,16 +136,16 @@ export default function AuthPage() {
             </div>
             <h1 className="text-3xl font-bold text-white">РидМаркет</h1>
           </div>
-          <div className="bg-white rounded-3xl shadow-2xl p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Проверьте почту</h2>
-            <p className="text-gray-500 text-sm mb-1">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Проверьте почту</h2>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mb-1">
               Отправили письмо на
             </p>
-            <p className="font-semibold text-gray-800 mb-4">{email}</p>
-            <p className="text-gray-400 text-xs mb-6">
+            <p className="font-semibold text-gray-800 dark:text-slate-100 mb-4">{email}</p>
+            <p className="text-gray-400 dark:text-slate-500 text-xs mb-6">
               Перейдите по ссылке в письме чтобы продолжить. Если письмо не пришло — проверьте папку «Спам».
             </p>
             <button
@@ -174,17 +174,17 @@ export default function AuthPage() {
           <p className="text-indigo-200 mt-1 text-sm">Поездки с договорной ценой</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
 
           {/* Вкладки — только для login и register */}
           {(mode === 'login' || mode === 'register') && (
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-gray-100 dark:border-slate-700">
               <button
                 onClick={() => switchMode('login')}
                 className={`flex-1 py-4 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                   mode === 'login'
                     ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/40'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                 }`}
               >
                 <LogIn className="w-4 h-4" /> Войти
@@ -194,7 +194,7 @@ export default function AuthPage() {
                 className={`flex-1 py-4 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                   mode === 'register'
                     ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/40'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                 }`}
               >
                 <UserPlus className="w-4 h-4" /> Регистрация
@@ -206,9 +206,9 @@ export default function AuthPage() {
 
             {/* Заголовок сброса пароля */}
             {mode === 'reset' && (
-              <div className="pb-2 border-b border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900">Сброс пароля</h2>
-                <p className="text-sm text-gray-500 mt-1">
+              <div className="pb-2 border-b border-gray-100 dark:border-slate-700">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Сброс пароля</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                   Отправим ссылку для восстановления на почту
                 </p>
               </div>
@@ -219,7 +219,7 @@ export default function AuthPage() {
               <div>
                 <label className="label">Ваше имя</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                   <input
                     type="text"
                     value={fullName}
@@ -237,7 +237,7 @@ export default function AuthPage() {
             <div>
               <label className="label">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <input
                   type="email"
                   value={email}
@@ -260,7 +260,7 @@ export default function AuthPage() {
               <div>
                 <label className="label">Пароль</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                   <input
                     type={showPass ? 'text' : 'password'}
                     value={password}
@@ -276,7 +276,7 @@ export default function AuthPage() {
                     type="button"
                     onClick={() => setShowPass(v => !v)}
                     aria-label={showPass ? 'Скрыть пароль' : 'Показать пароль'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
                   >
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -289,7 +289,7 @@ export default function AuthPage() {
               <div>
                 <label className="label">Повторите пароль</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                   <input
                     type={showPass ? 'text' : 'password'}
                     value={password2}
@@ -319,7 +319,7 @@ export default function AuthPage() {
                     onChange={e => setRememberMe(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-indigo-600 accent-indigo-600"
                   />
-                  <span className="text-xs text-gray-500">Запомнить меня</span>
+                  <span className="text-xs text-gray-500 dark:text-slate-400">Запомнить меня</span>
                 </label>
                 <button
                   onClick={() => switchMode('reset')}
@@ -356,7 +356,7 @@ export default function AuthPage() {
             {mode === 'reset' && (
               <button
                 onClick={() => switchMode('login')}
-                className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors text-center pt-1"
+                className="w-full text-sm text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors text-center pt-1"
               >
                 ← Вернуться ко входу
               </button>

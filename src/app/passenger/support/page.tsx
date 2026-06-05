@@ -30,33 +30,33 @@ export default function SupportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Поддержка</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Поддержка</h1>
         </div>
       </header>
 
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         {/* Контакты */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Связаться с нами</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Связаться с нами</p>
           <div className="space-y-2">
             <a href="tel:+78001234567" className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
               <Phone className="w-5 h-5 text-indigo-600" />
               <div>
-                <p className="text-sm font-medium text-gray-900">+7 (800) 123-45-67</p>
-                <p className="text-xs text-gray-400">Бесплатно, пн-вс 8:00-22:00</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">+7 (800) 123-45-67</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Бесплатно, пн-вс 8:00-22:00</p>
               </div>
             </a>
             <a href="mailto:support@ridexgo.ru" className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
               <Mail className="w-5 h-5 text-indigo-600" />
               <div>
-                <p className="text-sm font-medium text-gray-900">support@ridexgo.ru</p>
-                <p className="text-xs text-gray-400">Ответ в течение 24 часов</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">support@ridexgo.ru</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Ответ в течение 24 часов</p>
               </div>
             </a>
           </div>
@@ -64,7 +64,7 @@ export default function SupportPage() {
 
         {/* Написать сообщение */}
         <div className="card p-4">
-          <p className="font-semibold text-gray-900 mb-3">Написать в поддержку</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-3">Написать в поддержку</p>
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
@@ -83,23 +83,23 @@ export default function SupportPage() {
         </div>
 
         {/* FAQ */}
-        <div className="card divide-y divide-gray-50 overflow-hidden">
-          <p className="font-semibold text-gray-900 px-4 py-3">Частые вопросы</p>
+        <div className="card divide-y divide-gray-50 dark:divide-slate-800 overflow-hidden">
+          <p className="font-semibold text-gray-900 dark:text-white px-4 py-3">Частые вопросы</p>
           {FAQ.map((item, i) => (
             <div key={i}>
               <button
                 onClick={() => setOpenIdx(openIdx === i ? null : i)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
               >
-                <span className="text-sm font-medium text-gray-800 pr-3">{item.q}</span>
+                <span className="text-sm font-medium text-gray-800 dark:text-slate-100 pr-3">{item.q}</span>
                 {openIdx === i
-                  ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  ? <ChevronUp className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+                  : <ChevronDown className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
                 }
               </button>
               {openIdx === i && (
                 <div className="px-4 pb-3">
-                  <p className="text-sm text-gray-600 leading-relaxed">{item.a}</p>
+                  <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{item.a}</p>
                 </div>
               )}
             </div>

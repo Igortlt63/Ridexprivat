@@ -33,14 +33,14 @@ export default function SavedRoutesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="btn-ghost p-2 rounded-xl">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Сохранённые маршруты</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Сохранённые маршруты</h1>
           </div>
         </div>
       </header>
@@ -66,7 +66,7 @@ export default function SavedRoutesPage() {
                 <MapPin className="w-5 h-5 text-indigo-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900">{route.name}</p>
+                <p className="font-semibold text-gray-900 dark:text-white">{route.name}</p>
                 <div className="mt-1.5 space-y-1">
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0" />
